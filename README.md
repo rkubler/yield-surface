@@ -1,6 +1,6 @@
 # Yield Surface Atlas
 
-**Live page:** `https://<user>.github.io/<repo>/` (once GitHub Pages is enabled, see below)
+**Live page:** `https://rkubler.github.io/yield-surface
 
 This page plots yield surfaces in principal stress space, with their π-plane sections, meridians, plane-stress cuts and, for compacting materials, loading paths. It covers four families of criteria, all written in the stress invariants I₁, J₂ and J₃ (Lode angle):
 
