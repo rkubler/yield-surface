@@ -47,4 +47,13 @@ The 3D view needs WebGL. If a browser shows a WebGL message, check that hardware
 
 Tension is positive. ξ = I₁/√3 and ρ = √(2J₂) are the Haigh–Westergaard coordinates; the Lode angle θ is −30° on the tensile meridian and +30° on the compressive one. Stresses are normalized by a reference strength. Surfaces are computed in the browser by solving each criterion along rays in Haigh–Westergaard space. The loading paths use associated flow and neglect elastic strains.
 
-https://doi.org/10.5281/zenodo.23319332 
+## Author and acknowledgement
+Dr Régis Kubler, Arts et Métiers Institute of Technology.
+The simulator was developed with the assistance of Claude Opus 5.5 (Anthropic),
+October 2026. All content was reviewed by the author.
+
+## Licence
+Code: MIT, see [LICENSE](LICENSE). Documentation: CC BY 4.0.
+
+## Cite as
+Kubler, R. (2026). *Yield Surface Simulator*. Arts et Métiers Institute of Technology. Zenodo. DOI:https://doi.org/10.5281/zenodo.23319332 
