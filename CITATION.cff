@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this page in teaching material, please cite it as below."
+title: "Yield Surface Atlas"
+version: "1.6"
+date-released: "2026-10-11"
+type: software
+authors:
+  - family-names: "Kubler"
+    given-names: "Régis"
+    affiliation: "Arts et Métiers Institute of Technology"
+abstract: "Interactive, educational plots of yield surfaces in principal stress space for pressure-insensitive criteria, pressure-sensitive cones, clays, foams and porous metals, and powder compacts, sands and granular fills."
+keywords:
+  - plasticity
+  - yield surface
+  - stress invariants
+  - powder compaction
+  - granular media

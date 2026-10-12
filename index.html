@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="author" content="Régis Kubler">
+<meta name="description" content="Interactive atlas of yield surfaces written in the stress invariants I1, J2, J3: metals, frictional cones, capped and porous models, and powder and granular cap models with their hardening laws.">
+<title>Yield Surface Atlas</title>
+<style>:root{color-scheme:light}html,body{margin:0}body{font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: lab-instrument console. Category rail | rotating 3D specimen | readout column (equation, pi-plane, meridians). */
+:root{
+  --bg:#eef1f4; --panel:#fbfcfd; --fg:#15202b; --muted:#5b6876; --line:#d3dbe2; --grid:#e4e9ee;
+  --c0:#2b67a6; --c1:#a8661c; --c2:#8b3a78; --c3:#5d6b14; --ov:#127a6c; --cur:var(--c0);
+  --display:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1217; --panel:#141b22; --fg:#e2e8ee; --muted:#93a0ad; --line:#27323d; --grid:#1d262f;
+  --c0:#72a9e3; --c1:#e3a65a; --c2:#d483c1; --c3:#b9c96a; --ov:#4cc9b3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1217; --panel:#141b22; --fg:#e2e8ee; --muted:#93a0ad; --line:#27323d; --grid:#1d262f;
+  --c0:#72a9e3; --c1:#e3a65a; --c2:#d483c1; --c3:#b9c96a; --ov:#4cc9b3; color-scheme:dark}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--body);font-size:14px;line-height:1.5}
+*{box-sizing:border-box}
+.app{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "nav" "center" "info";gap:16px;padding-block:18px 28px;padding-inline:16px;max-width:1700px;margin:0 auto}
+header{grid-area:head;display:grid;grid-template-columns:minmax(0,1fr);gap:6px 28px;align-items:baseline}
+.intro{font-size:13px;line-height:1.45;color:var(--fg);margin:0;max-width:110ch;text-wrap:pretty}
+.intro b{font-weight:600}
+.credit{font-size:11.5px;color:var(--muted);margin:0}
+@media (min-width:900px){header{grid-template-columns:auto minmax(0,1fr);row-gap:3px}header h1{grid-column:1;grid-row:1/span 3;align-self:start}.intro,.credit,.conv{grid-column:2}.conv{max-width:none}}
+h1{font-family:var(--display);font-stretch:78%;font-weight:800;font-size:clamp(26px,3.2vw,38px);letter-spacing:-.01em;margin:0;text-wrap:balance}
+.conv{font-family:var(--mono);font-size:11.5px;color:var(--muted);max-width:780px;margin:0}
+.conv b{color:var(--fg);font-weight:600}
+nav{grid-area:nav;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;min-width:0}
+.group{display:flex;flex-direction:column;gap:6px}
+.ghead{display:flex;flex-direction:column;gap:2px;padding-left:10px;border-left:3px solid var(--gc)}
+.ghead .gt{font-family:var(--display);font-stretch:85%;font-weight:700;font-size:15px}
+.ghead .gs{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gc);font-weight:600}
+.ghead p{margin:2px 0 0;font-size:12px;color:var(--muted);line-height:1.4}
+.mlist{display:flex;flex-direction:column;gap:2px}
+.mbtn{appearance:none;border:1px solid transparent;background:none;color:var(--fg);font:inherit;text-align:left;padding:5px 10px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mbtn:hover{background:var(--panel);border-color:var(--line)}
+.mbtn[aria-pressed="true"]{background:var(--panel);border-color:var(--gc);box-shadow:inset 3px 0 0 var(--gc)}
+.mbtn:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--gc,var(--c0));outline-offset:2px}
+.chips{display:flex;gap:3px;flex-shrink:0}
+.chip{font-family:var(--mono);font-size:9.5px;padding:1px 4px;border-radius:3px;border:1px solid var(--line);color:var(--muted);opacity:.35}
+.chip.on{opacity:1;color:var(--fg);border-color:var(--muted)}
+.center{grid-area:center;display:flex;flex-direction:column;gap:16px;min-width:0}
+.stage{position:relative;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+#three{width:100%;height:clamp(380px,62vh,700px);touch-action:none}
+#three canvas{display:block}
+.toolbar{position:absolute;top:12px;left:12px;right:12px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none}
+.toolbar button{pointer-events:auto;appearance:none;font:600 12px var(--body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer}
+.toolbar button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.overlay{position:absolute;left:14px;bottom:12px;right:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;pointer-events:none}
+.ovname{font-family:var(--display);font-stretch:75%;font-weight:800;font-size:clamp(24px,3vw,40px);line-height:1;color:var(--cur)}
+.ovcat{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:4px}
+.ovhint{font-size:11px;color:var(--muted);text-align:right}
+.ovvs{font-family:var(--display);font-stretch:75%;font-weight:700;font-size:clamp(16px,1.8vw,22px);color:var(--ov);margin-top:4px}
+.cmprow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cmprow select{flex:1;min-width:0;font:inherit;font-size:13px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+.btn2{appearance:none;font:600 12px var(--body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer}
+.btn2:disabled{opacity:.4;cursor:default}
+.evorow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:10px}
+.evoinfo{font-family:var(--mono);font-size:12px;color:var(--fg);font-variant-numeric:tabular-nums}
+.btn2[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.pchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.pchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 10px 2px 4px;background:none;color:var(--fg);cursor:pointer;font-family:inherit}
+.pchip i{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid var(--pc);background:var(--pc)}
+.pchip.off i{background:none}
+.pchip.off{color:var(--muted)}
+.pchip[aria-pressed="true"]{border-color:var(--fg);font-weight:600}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.presets button{appearance:none;font:12px var(--body);color:var(--fg);background:none;border:1px dashed var(--line);border-radius:999px;padding:3px 10px;cursor:pointer}
+.presets button:hover{border-color:var(--ov);color:var(--ov)}
+.key{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin-top:10px}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{display:inline-block;width:18px;height:3px;border-radius:2px}
+.oveq{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.oveq .eq{font-size:13px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.err{padding:40px;color:var(--muted)}
+.info{grid-area:info;display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.card h2{font-family:var(--display);font-stretch:85%;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.eq{overflow-x:auto;padding-block:4px;font-size:15px}
+.eq .katex{display:block}
+.eq math{font-size:1.05em}
+.eq .sub{font-size:13px;color:var(--muted)}
+.note{font-size:13px;color:var(--fg);margin:8px 0 0;line-height:1.5}
+.warn{font-size:12px;line-height:1.45;margin:8px 0 0;padding:6px 9px;border-radius:6px;border:1px solid color-mix(in srgb,#d1495b 45%,transparent);background:color-mix(in srgb,#d1495b 10%,transparent);color:var(--fg)}
+.ref{font-size:11.5px;color:var(--muted);margin:6px 0 0;line-height:1.45}
+.ref b{color:var(--fg);font-weight:600}
+.ref a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
+.ref a:hover{color:var(--fg)}
+.uses{display:flex;gap:6px;align-items:center;margin-top:10px;font-size:11px;color:var(--muted)}
+.uses .chip{font-size:11px;padding:2px 6px}
+.params{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.param label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.param output{font-family:var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--cur)}
+.readout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.readout b{display:block;color:var(--fg);font-size:13px;font-weight:600}
+.slicectl{margin-top:10px}
+.legend{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
+.empty{font-size:12px;color:var(--muted)}
+.plots{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;min-width:0}
+.tile{display:flex;flex-direction:column;padding:10px 12px;min-width:0}
+.th{display:flex;justify-content:space-between;align-items:baseline;gap:4px 10px;flex-wrap:wrap}
+.th h2{margin:0;text-transform:none;letter-spacing:.02em;font-size:13px;color:var(--fg)}
+.ro{font-family:var(--mono);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ro b{color:var(--fg);font-weight:600}
+.cv{position:relative;margin-top:6px;min-height:0}
+.cv canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#tPi .cv,#tPS .cv{aspect-ratio:1/1}
+#tMer .cv{aspect-ratio:2/1}
+#tPath .cv{aspect-ratio:3/2}
+.slicectl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:6px}
+.slicectl output{font-family:var(--mono);color:var(--fg);min-width:4ch;text-align:right}
+.pinfo{margin:8px 0 0}
+.legend b{color:var(--fg);font-weight:600}
+@media (max-width:780px){
+  .mlist{flex-direction:row;flex-wrap:wrap}
+  .chips{display:none}
+  #three{height:420px}
+}
+/* one-screen dashboard on desktop: 3D view + all plots visible, side columns scroll on their own */
+@media (min-width:1100px) and (min-height:620px){
+  html,body{height:100%;overflow:hidden}
+  .app{height:100vh;height:100dvh;max-width:none;grid-template-columns:210px minmax(0,1fr) 330px;grid-template-rows:auto minmax(0,1fr);grid-template-areas:"head head head" "nav center info";gap:12px;padding-block:10px;overflow:hidden}
+  h1{font-size:26px}
+  .conv{font-size:11px}
+  nav{display:flex;flex-direction:column;gap:14px;overflow-y:auto;min-height:0;padding-right:4px}
+  .ghead p{display:none}
+  .info{overflow-y:auto;min-height:0;padding-right:4px;gap:12px}
+  .center{display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto;padding-right:4px;--vh:calc(100dvh - 96px)}
+  .center>.stage{flex:none;height:calc(var(--vh)*.52)}
+  .center>.plots{flex:none}
+  .center>.plots{height:calc(var(--vh)*1.1);grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}
+  .center:not(.n4) #tMer{grid-column:1/-1}
+  .stage{min-height:0}
+  #three{height:100%}
+  .plots{grid-template-columns:repeat(3,minmax(0,1fr));min-height:0;gap:12px}
+  .plots.n4{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}
+  .tile{min-height:0}
+  .tile[hidden]{display:none}
+  .tile .cv{aspect-ratio:auto!important;flex:1}
+  .ovname{font-size:28px}
+}
+@media (min-width:1700px) and (min-height:620px){
+  .app{grid-template-columns:210px minmax(0,1fr) 340px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+.refs{max-width:1640px;margin:0 auto;padding-block:8px 32px;padding-inline:16px;color:var(--muted);font-size:12px;line-height:1.55}
+.refs h2{font-family:var(--display);font-stretch:85%;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px;color:var(--muted)}
+.refs p{margin:0 0 6px;max-width:110ch}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Yield Surface Atlas</h1>
+    <p class="intro">This page plots yield surfaces in principal stress space, with their π-plane sections, meridians, plane-stress cuts and, for compacting materials, loading paths, for four families of criteria: <b>pressure-insensitive criteria</b>, <b>pressure-sensitive cones</b>, <b>clays · foams · porous metals</b> and <b>powder compacts · sands · granular fills</b>. It is made for educational purposes.</p>
+    <p class="credit">Dr Régis Kubler, Arts et Métiers Institute of Technology · Developed with the assistance of Claude Opus 5.5 (Anthropic), October 2026 · Version 1.6 (11 October 2026)</p>
+    <p class="conv"><b>Tension positive.</b> ξ = I₁/√3 · ρ = √(2J₂) · Lode angle θ = −30° on the tensile and +30° on the compressive meridian · stresses normalized by a reference strength.</p>
+  </header>
+
+  <nav id="nav" aria-label="Yield criteria"></nav>
+
+  <main class="center" id="center">
+    <div class="stage" id="stage">
+      <div id="three"></div>
+      <div class="toolbar">
+        <button id="bTour" type="button" aria-pressed="false">▶ Tour all</button>
+        <button id="bRot" type="button" aria-pressed="true">Rotate</button>
+        <button id="bSweep" type="button" aria-pressed="true">Sweep π-plane</button>
+        <button id="bCut" type="button" aria-pressed="true">σ₃ = 0 cut</button>
+      </div>
+      <div class="overlay">
+        <div><div class="ovname" id="ovName">von Mises</div><div class="ovvs" id="ovVs" hidden></div><div class="ovcat" id="ovCat"></div></div>
+        <div class="ovhint">Drag to orbit · scroll to zoom<br>Principal stress space σ₁ σ₂ σ₃</div>
+      </div>
+    </div>
+    <div class="plots" id="plots">
+      <section class="card tile" id="tPi">
+        <div class="th"><h2>π-plane section</h2><span class="ro">ρ<sub>t</sub>/ρ<sub>c</sub> <b id="rK">–</b> · I₁ <b id="rI1">0</b></span></div>
+        <div class="cv"><canvas id="pi"></canvas></div>
+        <div class="slicectl"><label for="xi">ξ</label><input type="range" id="xi" min="-4.6" max="4.6" step="0.01" value="-1"><output id="xiOut"></output><span hidden id="rXi"></span></div>
+      </section>
+      <section class="card tile" id="tPS">
+        <div class="th"><h2>Plane stress σ₃ = 0</h2><span class="ro">σ<sub>t</sub> <b id="rSt">–</b> · σ<sub>c</sub> <b id="rSc">–</b> · σ<sub>c</sub>/σ<sub>t</sub> <b id="rRat">–</b></span></div>
+        <div class="cv"><canvas id="ps"></canvas></div>
+      </section>
+      <section class="card tile" id="tMer">
+        <div class="th"><h2>Meridians ρ(ξ)</h2><span class="ro">top: tensile · bottom: compressive</span></div>
+        <div class="cv"><canvas id="mer"></canvas></div>
+      </section>
+      <section class="card tile" id="tPath" hidden>
+        <div class="th"><h2>Compaction &amp; densification</h2><span class="ro" id="pathSel"></span></div>
+        <div class="cv"><canvas id="pathC"></canvas></div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="info">
+    <section class="card">
+      <h2>Yield function</h2>
+      <div class="eq" id="eq"></div>
+      <div class="uses">Depends on <span class="chips" id="usesChips"></span></div>
+      <p class="note" id="note"></p>
+      <p class="warn" id="warn" hidden></p>
+      <p class="ref" id="ref" hidden></p>
+      <div class="params" id="params"></div>
+    </section>
+    <section class="card" id="evoCard" hidden>
+      <h2>Internal variables &amp; evolution</h2>
+      <div class="eq" id="evoEq"></div>
+      <p class="note" id="evoNote"></p>
+      <div class="evorow"><button type="button" class="btn2" id="bEvo">▶ Animate hardening</button><span class="evoinfo" id="evoInfo"></span></div>
+    </section>
+    <section class="card" id="pathCard" hidden>
+      <h2>Loading paths</h2>
+      <div class="pchips" id="pathChips"></div>
+      <div class="evorow"><button type="button" class="btn2" id="bRun">▶ Run path</button><button type="button" class="btn2" id="bReset" disabled>Reset state</button></div>
+      <p class="evoinfo pinfo" id="pathInfo"></p>
+      <p class="legend" id="pathNote">Proportional stress paths σ = λ·d starting from the current state; set the initial compacity with the model's compacity slider above. The path is driven by density: the compacity is stepped from its initial value up to full density (ρ = 0.999), and for each state the stress that keeps σ on the hardened surface (f = 0) is found, with associated flow giving plastic compaction ε<sub>v</sub><sup>p</sup> = −tr ε<sup>p</sup> = ln(ρ/ρ₀). When the flow at first yield is dilatant (tension, shear, or the dry side of the cap), the compacity is stepped down instead, toward the loosest state (tap density, or 1 − 1/q₁ for Gurson): the material loosens or its voids grow, and the stress softens, stays constant on a shear line, or ends at a critical state where the flow turns isochoric. A compacting path stops early (×) when its flow turns isochoric or dilatant. Full density needs a very large stress, so the stress axis is logarithmic; in 3D the rays are cut at the edge of the view. Elastic strains are left out. Click a path name to select it for the run; click its swatch to hide it.</p>
+    </section>
+    <section class="card" id="cmpCard">
+      <h2>Compare two surfaces</h2>
+      <div class="cmprow">
+        <label for="ovSel" class="sr">Overlay</label>
+        <select id="ovSel"></select>
+        <button type="button" class="btn2" id="bSwap" disabled>⇄ Swap</button>
+      </div>
+      <div class="presets" id="presets"></div>
+      <div id="ovInfo" hidden>
+        <div class="key"><span><i style="background:var(--cur)"></i><b id="kA"></b></span><span><i style="background:var(--ov)"></i><b id="kB"></b></span></div>
+        <div class="oveq"><div class="eq" id="eq2"></div></div>
+        <p class="legend">The sliders above edit the main surface. Swap to edit the overlay.</p>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Reading the plots</h2>
+      <p class="legend"><b>Conventions.</b> Tension positive. I₁ = tr σ, J₂ = ½ s:s, J₃ = det s. Haigh–Westergaard coordinates ξ = I₁/√3, ρ = √(2J₂); Lode angle θ with sin 3θ = −(3√3/2)·J₃/J₂<sup>3/2</sup>, so θ = −30° on the tensile meridian and +30° on the compressive one.</p>
+      <p class="legend"><b>π-plane.</b> Section of the surface at the current ξ (slider or sweep). T and C mark the tensile and compressive meridians; the dashed circle passes through the compressive meridian, so any Lode-angle (J₃) dependence shows as a gap. An overlay is drawn dashed in the second colour.</p>
+      <p class="legend"><b>Plane stress.</b> Intersection with σ₃ = 0 in σ₁–σ₂, also drawn dashed in 3D. Uniaxial strengths are read along the σ₁ axis. For cap models the loading paths are drawn as rays.</p>
+      <p class="legend"><b>Meridians.</b> Upper curve: tensile meridian (θ = −30°). Lower curve, mirrored: compressive meridian (θ = +30°). Compression is to the left.</p>
+      <p class="legend"><b>Compaction &amp; densification.</b> Plastic compaction ε<sub>v</sub><sup>p</sup> and compacity ρ<sub>r</sub> against the applied stress (log scale) for each loading path; × marks where a path stops.</p>
+    </section>
+  </aside>
+</div>
+
+
+<footer class="refs">
+  <h2>References</h2>
+  <p>Tresca (1864) · von Mises (1913) · Drucker (1949), <i>J. Appl. Mech.</i> 16 · Drucker &amp; Prager (1952), <i>Q. Appl. Math.</i> 10 · Hosford (1972), <i>J. Appl. Mech.</i> 39 · Roscoe &amp; Burland (1968), <i>Engineering Plasticity</i> · Matsuoka &amp; Nakai (1974), <i>Proc. JSCE</i> 232 · Lade &amp; Duncan (1975), <i>J. Geotech. Eng. Div.</i> 101 · Willam &amp; Warnke (1975), <i>IABSE Proc.</i> 19 · Ottosen (1977), <i>J. Eng. Mech. Div.</i> 103 · Gurson (1977), <i>J. Eng. Mater. Technol.</i> 99 · Hoek &amp; Brown (1980), <i>J. Geotech. Eng. Div.</i> 106 · Tvergaard &amp; Needleman (1984), <i>Acta Metall.</i> 32.</p>
+  <p>Powders and granular media: DiMaggio &amp; Sandler (1971), <i>J. Eng. Mech. Div.</i> 97 · Kuhn &amp; Downey (1971), <i>Int. J. Powder Metall.</i> 7 · Sandler &amp; Rubin (1979), <i>Int. J. Numer. Anal. Methods Geomech.</i> 3 · Dafalias &amp; Manzari (2004), <i>J. Eng. Mech.</i> 130 · Taiebat &amp; Dafalias (2008), <i>Int. J. Numer. Anal. Methods Geomech.</i> 32.</p>
+  <p>Every surface is computed in the browser by solving its I₁, J₂, J₃ (Lode angle) equation along rays in Haigh–Westergaard space. Built with three.js and KaTeX.</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+(function(){
+const S3=Math.sqrt(3),S2=Math.sqrt(2),S6=Math.sqrt(6),D2R=Math.PI/180,PI=Math.PI;
+const RMAX=4, SCAN=5.2, OPEN=3.2, NX=64, NT=96;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- stress state from Haigh–Westergaard coordinates ---------- */
+function point(xi,rho,om,C){const c=(C?C[0]:0)+Math.cos(om)*rho,s=(C?C[1]:0)+Math.sin(om)*rho,h=xi/S3;return [h+2*c/S6,h-c/S6+s/S2,h-c/S6-s/S2];}
+const ctrOf=(m,P,xi)=>m.ctr?m.ctr(xi,P):null;
+function inv(p){const I1=p[0]+p[1]+p[2],m=I1/3,a=p[0]-m,b=p[1]-m,c=p[2]-m;
+  const J2=(a*a+b*b+c*c)/2,J3=a*b*c;let th=0;
+  if(J2>1e-14){let x=-1.5*S3*J3/Math.pow(J2,1.5);x=Math.max(-1,Math.min(1,x));th=Math.asin(x)/3;}
+  return {I1,J2,J3,th,sig:p};}
+/* principal stresses rebuilt from invariants (k=0 max, 1 mid, 2 min) */
+function sigK(I,k){return I.I1/3+2/S3*Math.sqrt(I.J2)*Math.cos(I.th+PI/6-2*PI*k/3);}
+
+/* ---------- criteria, written in I1, J2, J3 / theta ---------- */
+const CATS=[
+ {name:'Pressure-insensitive',sub:'Metals',col:'--c0',blurb:'Only J₂ (and J₃) enter. Surfaces are prisms parallel to the hydrostatic axis: plastic flow is volume-preserving and pressure does not change strength.'},
+ {name:'Pressure-sensitive cones',sub:'Soils · rock · concrete · ductile metals',col:'--c1',blurb:'I₁ enters linearly or nonlinearly. Strength grows with confinement, so the surface opens toward compression and closes at an apex in tension.'},
+ {name:'Capped & porous',sub:'Clays · foams · porous metals',col:'--c2',blurb:'Closed surfaces that also yield under pure hydrostatic stress, through compaction (clays) or void growth (porous metals).'},
+ {name:'Powders & granular media',sub:'Powder compacts · sands · granular fills',col:'--c3',blurb:'A shear failure line closed by a moving cap. The cap position, density or back-stress are internal variables tied to plastic strain, so these models track compaction and densification.'}
+];
+const MODELS=[
+ {id:'mises',cat:0,name:'von Mises',uses:[0,1,0],
+  tex:['f=\\sqrt{3J_2}-\\sigma_0'],
+  note:'Yield when distortional energy, measured by J₂, reaches a critical value. A circular cylinder around the hydrostatic axis; the default for ductile metals.',
+  params:[],F:(I)=>Math.sqrt(3*I.J2)-1},
+ {id:'tresca',cat:0,name:'Tresca',uses:[0,1,1],
+  tex:['f=2\\sqrt{J_2}\\cos\\theta-\\sigma_0'],
+  note:'Maximum shear stress. A regular hexagonal prism; the Lode angle (and so J₃) sets the corners. Slightly conservative for most metals.',
+  params:[],F:(I)=>2*Math.sqrt(I.J2)*Math.cos(I.th)-1},
+ {id:'drucker49',cat:0,name:'Drucker (1949)',uses:[0,1,1],
+  tex:['f=J_2^3-c\\,J_3^2-\\left(\\tfrac{1}{27}-\\tfrac{4c}{729}\\right)\\sigma_0^6'],
+  note:'Adds J₃ explicitly to sit between Tresca and von Mises. c = 0 is von Mises; the surface stays convex for −27/8 ≤ c ≤ 9/4.',
+  params:[{k:'c',label:'c',min:-3.3,max:2.2,step:0.05,v:1.8}],
+  F:(I,P)=>(Math.pow(I.J2,3)-P.c*I.J3*I.J3)/(1/27-4*P.c/729)-1},
+ {id:'hosford',cat:0,name:'Hosford',uses:[0,1,1],
+  tex:['f=\\tfrac12\\textstyle\\sum_{i<j}|\\sigma_i-\\sigma_j|^n-\\sigma_0^n','\\sigma_k=\\tfrac{I_1}{3}+\\tfrac{2}{\\sqrt3}\\sqrt{J_2}\\cos\\!\\left(\\theta+\\tfrac{\\pi}{6}-\\tfrac{2\\pi k}{3}\\right)'],
+  note:'Non-quadratic isotropic criterion. n = 2 or 4 gives von Mises, n = 1 or n → ∞ gives Tresca. n ≈ 6 fits BCC and n ≈ 8 fits FCC metals.',
+  params:[{k:'n',label:'exponent n',min:1,max:30,step:0.5,v:8}],
+  F:(I,P)=>{const a=sigK(I,0),b=sigK(I,1),c=sigK(I,2),n=P.n;
+    const v=(Math.pow(Math.abs(a-b),n)+Math.pow(Math.abs(b-c),n)+Math.pow(Math.abs(c-a),n))/2;return Math.pow(v,1/n)-1;}},
+ {id:'cb',cat:0,name:'Cazacu–Barlat (2004)',uses:[0,1,1],
+  tex:['f=J_2^{3/2}-c\\,J_3-k^3','\\dfrac{\\sigma_T}{\\sigma_C}=\\left(\\dfrac{3\\sqrt3+2c}{3\\sqrt3-2c}\\right)^{1/3},\\qquad k^3=\\sigma_T^3\\left(\\tfrac{1}{3\\sqrt3}-\\tfrac{2c}{27}\\right)'],
+  note:'J₃ enters to an odd power, so the material yields at different stresses in tension and compression (strength differential). The π-plane locus is a rounded triangle, convex only for |c| ≤ 3√3/4 ≈ 1.30; at |c| = 3√3/2 the tensile (or compressive) strength becomes infinite. Developed for HCP metals (magnesium, titanium), where twinning causes this asymmetry; the anisotropic version is CPB06. c = 0 recovers von Mises; stresses are normalized by σ_T.',
+  params:[{k:'c',label:'asymmetry c',min:-2.5,max:2.5,step:0.05,v:1}],
+  warn:P=>Math.abs(P.c)>3*S3/4?`Non-convex: |c| = ${Math.abs(P.c).toFixed(2)} exceeds 3√3/4 ≈ 1.30, so the π-plane triangle has concave sides. Such a surface is not admissible for associated plasticity (Drucker's stability postulate).`:null,
+  F:(I,P)=>{const k3=1/(3*S3)-2*P.c/27;return Math.cbrt(Math.pow(I.J2,1.5)-P.c*I.J3)/Math.cbrt(k3)-1;}},
+ {id:'dp',cat:1,name:'Drucker–Prager',uses:[1,1,0],
+  tex:['f=\\alpha I_1+\\sqrt{J_2}-k'],
+  note:'A smooth circular cone. The αI₁ term adds frictional pressure dependence; α = 0 falls back to a von Mises cylinder. Common as a smooth stand-in for Mohr–Coulomb in finite element codes.',
+  params:[{k:'a',label:'α',min:0,max:0.35,step:0.005,v:0.18},{k:'k',label:'k',min:0.2,max:1,step:0.01,v:0.55}],
+  F:(I,P)=>P.a*I.I1+Math.sqrt(I.J2)-P.k},
+ {id:'mc',cat:1,name:'Mohr–Coulomb',uses:[1,1,1],
+  tex:['f=\\tfrac{I_1}{3}\\sin\\phi+\\sqrt{J_2}\\left(\\cos\\theta-\\tfrac{\\sin\\theta\\,\\sin\\phi}{\\sqrt3}\\right)-c\\cos\\phi'],
+  note:'Hexagonal pyramid with an irregular hexagonal section: the tensile meridian is shorter than the compressive one. φ = 0 recovers Tresca. The standard criterion for soils and rock.',
+  params:[{k:'phi',label:'friction angle φ (°)',min:0,max:45,step:0.5,v:30},{k:'c',label:'cohesion c',min:0.2,max:1,step:0.01,v:0.5}],
+  F:(I,P)=>{const sp=Math.sin(P.phi*D2R),cp=Math.cos(P.phi*D2R);return I.I1/3*sp+Math.sqrt(I.J2)*(Math.cos(I.th)-Math.sin(I.th)*sp/S3)-P.c*cp;}},
+ {id:'ld',cat:1,name:'Lade–Duncan',uses:[1,1,1],
+  tex:['f=\\eta_1\\bar I_3-\\bar I_1^{\\,3}','\\bar I_3=J_3-\\tfrac{\\bar I_1J_2}{3}+\\tfrac{\\bar I_1^{\\,3}}{27},\\quad \\bar I_1=I_1-3a','\\eta_1=\\tfrac{(3-\\sin\\phi)^3}{(1+\\sin\\phi)(1-\\sin\\phi)^2}'],
+  note:'Built on I₁ and I₃ for sands; a curved triangular cone. Here η₁ matches Mohr–Coulomb in triaxial compression and a shifts the apex to give a small tensile strength.',
+  params:[{k:'phi',label:'friction angle φ (°)',min:10,max:45,step:0.5,v:30},{k:'a',label:'tensile offset a',min:0,max:1.2,step:0.01,v:0.35}],
+  F:(I,P)=>{const s=Math.sin(P.phi*D2R),eta=Math.pow(3-s,3)/((1+s)*(1-s)*(1-s));const i1=I.I1-3*P.a;
+    const i3=I.J3-i1*I.J2/3+i1*i1*i1/27;return eta*i3-i1*i1*i1;}},
+ {id:'mn',cat:1,name:'Matsuoka–Nakai',uses:[1,1,1],
+  tex:['f=\\eta_2\\bar I_3-\\bar I_1\\bar I_2','\\bar I_2=\\tfrac{\\bar I_1^{\\,2}}{3}-J_2,\\quad \\eta_2=\\tfrac{9-\\sin^2\\phi}{1-\\sin^2\\phi}'],
+  note:'From the spatially mobilized plane. With η₂ matched it passes through all six Mohr–Coulomb corners while staying smooth. Used for sands and other granular soils.',
+  params:[{k:'phi',label:'friction angle φ (°)',min:10,max:45,step:0.5,v:30},{k:'a',label:'tensile offset a',min:0,max:1.2,step:0.01,v:0.35}],
+  F:(I,P)=>{const s=Math.sin(P.phi*D2R),eta=(9-s*s)/(1-s*s);const i1=I.I1-3*P.a;
+    const i3=I.J3-i1*I.J2/3+i1*i1*i1/27,i2=i1*i1/3-I.J2;return eta*i3-i1*i2;}},
+ {id:'hb',cat:1,name:'Hoek–Brown',uses:[1,1,1],
+  tex:['f=4J_2\\cos^2\\theta+m\\,\\sigma_c\\!\\left[\\tfrac{I_1}{3}+\\sqrt{J_2}\\left(\\cos\\theta-\\tfrac{\\sin\\theta}{\\sqrt3}\\right)\\right]-s\\,\\sigma_c^2'],
+  note:'Empirical criterion for rock. Meridians are parabolic, so the effective friction angle drops as confinement grows. m depends on rock type; s = 1 for intact rock.',
+  params:[{k:'m',label:'m',min:2,max:30,step:0.5,v:10}],
+  F:(I,P)=>{const c=Math.cos(I.th),r=Math.sqrt(I.J2);return 4*I.J2*c*c+P.m*(I.I1/3+r*(c-Math.sin(I.th)/S3))-1;}},
+ {id:'ww',cat:1,name:'Willam–Warnke',uses:[1,1,1],
+  tex:['f=\\sqrt{2J_2}-r(\\bar\\theta)\\left(1-\\tfrac{I_1}{\\sqrt3\\,\\xi_0}\\right),\\quad\\bar\\theta=\\theta+\\tfrac{\\pi}{6}','r=\\tfrac{2r_c(r_c^2-r_t^2)\\cos\\bar\\theta+r_c(2r_t-r_c)\\sqrt{4(r_c^2-r_t^2)\\cos^2\\bar\\theta+5r_t^2-4r_tr_c}}{4(r_c^2-r_t^2)\\cos^2\\bar\\theta+(r_c-2r_t)^2}'],
+  note:'Three-parameter concrete model. The π-plane section is an elliptic arc between r_t and r_c, smooth and convex for ½ ≤ r_t/r_c ≤ 1, with straight meridians.',
+  params:[{k:'rr',label:'r_t / r_c',min:0.5,max:1,step:0.01,v:0.62}],
+  F:(I,P)=>{const rc=0.4,rt=P.rr*rc,c=Math.cos(I.th+PI/6),d=rc*rc-rt*rt;
+    const r=(2*rc*d*c+rc*(2*rt-rc)*Math.sqrt(Math.max(0,4*d*c*c+5*rt*rt-4*rt*rc)))/(4*d*c*c+(rc-2*rt)*(rc-2*rt));
+    return Math.sqrt(2*I.J2)-r*(1-I.I1/(S3*0.7));}},
+ {id:'ottosen',cat:1,name:'Ottosen',uses:[1,1,1],
+  tex:['f=A\\tfrac{J_2}{f_c^2}+\\lambda\\tfrac{\\sqrt{J_2}}{f_c}+B\\tfrac{I_1}{f_c}-1','\\lambda=K_1\\cos\\!\\left[\\tfrac13\\arccos(K_2\\cos3\\bar\\theta)\\right],\\ \\cos3\\bar\\theta=\\tfrac{3\\sqrt3}{2}\\tfrac{J_3}{J_2^{3/2}}'],
+  note:'Four-parameter concrete criterion (A = 1.276, B = 3.196, K₁ = 11.74). Curved meridians, and a section that is nearly triangular near the apex and rounds out under high pressure. K₂ controls that roundness.',
+  params:[{k:'K2',label:'K₂',min:0.5,max:0.999,step:0.001,v:0.980}],
+  F:(I,P)=>{const A=1.2759,B=3.1962,K1=11.7365,c3=-Math.sin(3*I.th);
+    const lam=c3>=0?K1*Math.cos(Math.acos(P.K2*c3)/3):K1*Math.cos(PI/3-Math.acos(-P.K2*c3)/3);
+    return A*I.J2+lam*Math.sqrt(I.J2)+B*I.I1-1;}},
+ {id:'bw',cat:1,name:'Bai–Wierzbicki (2008)',uses:[1,1,1],
+  tex:['f=\\bar\\sigma-\\sigma_0\\left[1-c_\\eta(\\eta-\\eta_0)\\right]L(\\bar\\theta)','L=c_\\theta^s+(c_\\theta^{ax}-c_\\theta^s)\\left(\\gamma-\\tfrac{\\gamma^{m+1}}{m+1}\\right)','\\bar\\sigma=\\sqrt{3J_2},\\quad\\eta=\\tfrac{I_1}{3\\bar\\sigma},\\quad\\bar\\theta=1-\\tfrac{6}{\\pi}\\left(\\theta+\\tfrac{\\pi}{6}\\right)','\\gamma=\\tfrac{\\cos(\\pi/6)}{1-\\cos(\\pi/6)}\\left(\\tfrac{1}{\\cos\\theta}-1\\right),\\quad c_\\theta^{ax}=\\begin{cases}c_\\theta^t&\\bar\\theta\\ge0\\\\c_\\theta^c&\\bar\\theta<0\\end{cases}'],
+  note:'Metal plasticity with pressure (stress triaxiality η) and Lode-angle (θ̄) dependence. The same two variables enter the hardening and the fracture locus ε̄_f(η, θ̄), which makes it a standard model for ductile fracture and damage. Here c_θ^t = 1, m = 6, η₀ = 1/3 and σ₀ = 1; the pressure term is solved as written in η, so the surface closes with a blunt apex in hydrostatic tension. c_η = 0 and all c_θ = 1 recover von Mises. The Lode factor L(θ̄) is convex only when c_θ^s is close enough to c_θ^t and c_θ^c; otherwise the π-plane section has concave parts.',
+  warn:P=>bwConvex(P)?null:'Non-convex: with these Lode factors the π-plane section has concave parts (typically c_θ^s too far below c_θ^t = 1 and c_θ^c, or c_θ^c far from 1). Such a surface is not admissible for associated plasticity (Drucker\'s stability postulate).',
+  params:[{k:'ce',label:'pressure sensitivity c_η',min:0,max:0.3,step:0.005,v:0.09},{k:'cs',label:'shear Lode factor c_θ^s',min:0.75,max:1,step:0.005,v:0.885},{k:'cc',label:'compression Lode factor c_θ^c',min:0.85,max:1.1,step:0.005,v:0.95}],
+  F:(I,P)=>{const sq=Math.sqrt(3*I.J2),sm=I.I1/3,tb=1-6/PI*(I.th+PI/6),g=6.464101615*(1/Math.cos(I.th)-1),m=6;
+    const cax=tb>=0?1:P.cc,L=P.cs+(cax-P.cs)*(g-Math.pow(g,m+1)/(m+1)),A=L*(1+P.ce/3),D=A*A-4*L*P.ce*sm;
+    if(D<0)return 1;return sq-(A+Math.sqrt(D))/2;}},
+ {id:'mcc',cat:2,name:'Modified Cam-Clay',uses:[1,1,0],
+  tex:['f=\\tfrac{3J_2}{M^2}+\\tfrac{I_1}{3}\\left(\\tfrac{I_1}{3}+p_c\\right)','\\text{i.e. } q^2/M^2+p\\,(p-p_c)=0'],
+  note:'Ellipsoidal surface for normally consolidated clay. It yields in pure compression at p = p_c, and M is the critical-state stress ratio. Volumetric hardening moves p_c.',
+  params:[{k:'M',label:'M',min:0.6,max:1.8,step:0.01,v:1.2},{k:'rho',label:'compacity ρ = 1/(1+e)',min:0.476,max:0.6,step:0.001,v:0.556}],
+  iv:'rho',
+  prep:P=>{P._pc=Math.exp((0.901-(1/P.rho-1))/0.25);},
+  evo:['e=e_N-\\lambda\\ln p_c\\quad(\\text{normal compression line})\\ \\Rightarrow\\ p_c=\\exp\\!\\left(\\tfrac{e_N-e}{\\lambda}\\right)','\\dot e=-(1+e)\\,\\dot\\varepsilon_v^p,\\qquad \\rho=\\tfrac{1}{1+e},\\qquad \\dot\\rho=\\rho\\,\\dot\\varepsilon_v^p','\\dot p_c=\\dfrac{1+e}{\\lambda-\\kappa}\\,p_c\\,\\dot\\varepsilon_v^p,\\qquad \\dot\\varepsilon_v^p=\\dot\\lambda\\,(2p-p_c)'],
+  evoNote:'The initial compacity ρ₀ = 1/(1+e₀) fixes the initial cap through the normal compression line: a denser soil starts with a larger p_c. Here e_N = 0.901 and λ = 0.25 (rigid-plastic, κ neglected). Wet side (p > p_c/2): compaction and hardening; dry side: softening.',
+  info:P=>`e = ${(1/P.rho-1).toFixed(3)} · p_c = ${P._pc.toFixed(3)}`,
+  F:(I,P)=>3*I.J2/(P.M*P.M)+I.I1/3*(I.I1/3+P._pc)},
+ {id:'gurson',cat:2,name:'Gurson (GTN)',uses:[1,1,0],
+  tex:['f=\\tfrac{3J_2}{\\sigma_0^2}+2q_1f^{*}\\cosh\\!\\left(\\tfrac{q_2I_1}{2\\sigma_0}\\right)-1-q_3f^{*2}'],
+  note:'Ductile metal with voids (q₁ = 1.5, q₂ = 1, q₃ = q₁²). The cosh(I₁) term lets voids grow under hydrostatic tension, which drives ductile fracture. f* = 0 recovers von Mises.',
+  params:[{k:'f',label:'void fraction f*',min:0.02,max:0.3,step:0.005,v:0.1}],
+  iv:'f',
+  evo:['\\dot f=\\underbrace{(1-f)\\,\\mathrm{tr}\\,\\dot{\\boldsymbol\\varepsilon}^p}_{\\text{growth}}+\\underbrace{A_N\\,\\dot{\\bar\\varepsilon}^p_m}_{\\text{nucleation}}','f^*=\\begin{cases}f & f\\le f_c\\\\ f_c+\\delta\\,(f-f_c) & f>f_c\\end{cases}','(1-f)\\,\\sigma_0\\,\\dot{\\bar\\varepsilon}^p_m=\\boldsymbol\\sigma:\\dot{\\boldsymbol\\varepsilon}^p'],
+  evoNote:'Void growth follows from mass conservation of the matrix. Past the critical porosity f_c the accelerated f* models void coalescence; the matrix flow stress σ₀ hardens with its own equivalent plastic strain.',
+  F:(I,P)=>3*I.J2+3*P.f*Math.cosh(I.I1/2)-1-2.25*P.f*P.f},
+ {id:'dpc',cat:3,name:'Drucker–Prager Cap',uses:[1,1,0],
+  tex:['F_s=q-p\\tan\\beta-d\\quad(p\\le p_a)','F_c=\\sqrt{(p-p_a)^2+(Rq)^2}-R\\,(d+p_a\\tan\\beta)\\quad(p>p_a)','p=-\\tfrac{I_1}{3},\\qquad q=\\sqrt{3J_2}'],
+  note:'Linear shear failure line closed by an elliptical cap, the standard model for die compaction of metal and pharmaceutical powders. The cap meets the shear line at p_a and crosses the hydrostatic axis at p_b.',
+  params:[{k:'beta',label:'friction angle β (°)',min:15,max:60,step:0.5,v:40},{k:'d',label:'cohesion d',min:0.1,max:0.8,step:0.01,v:0.35},{k:'R',label:'cap eccentricity R',min:0.2,max:1.2,step:0.01,v:0.5},{k:'rho',label:'compacity ρ_r (relative density)',min:0.52,max:0.9,step:0.002,v:0.6}],
+  iv:'rho',
+  prep:P=>{const tb=Math.tan(P.beta*D2R);P._pb=Math.max(0.05,(Math.log(1/(1-P.rho))-Math.LN2)/0.25);P._pa=Math.max(0,(P._pb-P.R*P.d)/(1+P.R*tb));P._tb=tb;},
+  evo:['\\ln\\dfrac{1}{1-\\rho_r}=K\\,p_b+A\\quad(\\text{Heckel})','p_a=\\dfrac{p_b-R\\,d}{1+R\\tan\\beta}','\\dot\\rho_r=\\rho_r\\,\\dot\\varepsilon_v^p,\\qquad \\dot\\varepsilon_v^p=-\\mathrm{tr}\\,\\dot{\\boldsymbol\\varepsilon}^p','d=d(\\rho_r),\\ \\ \\beta=\\beta(\\rho_r),\\ \\ R=R(\\rho_r)'],
+  evoNote:'The compacity (relative density) ρ_r is the state variable. Its initial value fixes the initial cap p_b through the Heckel compaction law; plastic compaction then raises ρ_r and pushes the cap out. Here K = 0.25 and A = ln 2 (tap density 0.5). In practice d, β and R are also calibrated against ρ_r.',
+  info:P=>`p_b = ${P._pb.toFixed(3)} · p_a = ${P._pa.toFixed(3)} · ρ_r = ${P.rho.toFixed(3)}`,
+  F:(I,P)=>{const p=-I.I1/3,q=Math.sqrt(3*I.J2);
+    if(p<=P._pa)return q-p*P._tb-P.d;
+    return (Math.sqrt((p-P._pa)**2+(P.R*q)**2)-P.R*(P.d+P._pa*P._tb))/P.R;}},
+ {id:'ds',cat:3,name:'DiMaggio–Sandler',uses:[1,1,0],
+  tex:['f_e=\\sqrt{J_2}-\\left(A-C\\,e^{-B\\bar I_1}\\right)\\quad(\\bar I_1\\le L)','f_c=(\\bar I_1-L)^2+R^2J_2-(X-L)^2\\quad(\\bar I_1>L)','\\bar I_1=-I_1\\ge -T\\ \\ (\\text{tension cut-off})'],
+  note:'The original cap model for soils (1971), later used for sands, rock and concrete. An exponential failure envelope, an elliptical cap that moves with plastic volume change, and a tension cut-off.',
+  params:[{k:'R',label:'cap aspect ratio R',min:1.2,max:4,step:0.05,v:2.5},{k:'rho',label:'compacity ρ_r (relative density)',min:0.5,max:0.95,step:0.002,v:0.6}],
+  iv:'rho',
+  prep:P=>{const A=0.9,B=0.6,C=0.6,W=Math.LN2,Dd=0.8,X0=3;P._ev=Math.log(P.rho/0.5);P._X=X0-Math.log(Math.max(1e-6,1-P._ev/W))/Dd;
+    let a=-0.3,b=P._X;for(let k=0;k<50;k++){const c=(a+b)/2;if(c+P.R*(A-C*Math.exp(-B*c))-P._X<0)a=c;else b=c;}P._L=Math.max(0,(a+b)/2);},
+  evo:['\\varepsilon_v^p=W\\left[1-e^{-D(X-X_0)}\\right]','X=X_0-\\tfrac1D\\ln\\!\\left(1-\\tfrac{\\varepsilon_v^p}{W}\\right)','X=L+R\\,F_e(L),\\quad L\\ge0','\\varepsilon_v^p=\\ln\\dfrac{\\rho_r}{\\rho_v},\\qquad W=\\ln\\dfrac{1}{\\rho_v}\\ \\ (\\text{full density})'],
+  evoNote:'The compacity ρ_r sets the plastic compaction from the virgin state ρ_v = 0.5, and that fixes the cap X. W is chosen so that X → ∞ exactly at full density. L follows from X. Here A = 0.9, B = 0.6, C = 0.6, T = 0.3, D = 0.8, X₀ = 3.',
+  info:P=>`ε_v^p = ${P._ev.toFixed(3)} · X = ${P._X.toFixed(3)} · L = ${P._L.toFixed(3)}`,
+  F:(I,P)=>{const i1=-I.I1;if(i1<-0.3)return 1;const Fe=x=>0.9-0.6*Math.exp(-0.6*x);
+    if(i1<=P._L)return Math.sqrt(I.J2)-Fe(i1);
+    return (Math.sqrt((i1-P._L)**2+P.R*P.R*I.J2)-(P._X-P._L))/P.R;}},
+ {id:'kd',cat:3,name:'Kuhn–Downey',uses:[1,1,0],
+  tex:['f=3J_2+(1-2\\nu)\\,I_1^2-Y_R^2','\\nu=0.5\\,\\rho_r^{1.92},\\qquad Y_R=Y_0\\,\\rho_r^{\\,2}'],
+  note:'Early yield criterion for sintered and compacted metal powders (powder forging). The apparent plastic Poisson ratio ν grows with relative density ρ_r; at ρ_r = 1, ν = 0.5 and the surface becomes a von Mises cylinder.',
+  params:[{k:'rho',label:'compacity ρ_r (relative density)',min:0.55,max:0.98,step:0.005,v:0.75}],
+  iv:'rho',
+  evo:['\\dot\\rho_r=-\\rho_r\\,\\mathrm{tr}\\,\\dot{\\boldsymbol\\varepsilon}^p\\quad(\\text{mass conservation})','\\mathrm{tr}\\,\\dot{\\boldsymbol\\varepsilon}^p=3\\dot\\lambda\\,\\dfrac{\\partial f}{\\partial I_1}=6\\dot\\lambda\\,(1-2\\nu)\\,I_1'],
+  evoNote:'Under compression (I₁ < 0) plastic flow reduces volume, density rises, ν approaches ½ and the closed ellipsoid stretches into a cylinder. Y_R = Y₀ρ_r² is one common fit for the apparent strength; Y₀ = 2.2 here.',
+  info:P=>{const nu=0.5*Math.pow(P.rho,1.92);return `ν = ${nu.toFixed(3)} · Y_R = ${(2.2*P.rho*P.rho).toFixed(3)}`;},
+  F:(I,P)=>{const nu=0.5*Math.pow(P.rho,1.92),Y=2.2*P.rho*P.rho;return Math.sqrt(3*I.J2+(1-2*nu)*I.I1*I.I1)-Y;}},
+ {id:'sanisand',cat:3,name:'SANISAND (closed)',uses:[1,1,1],
+  tex:['f=(\\mathbf s-p\\boldsymbol\\alpha):(\\mathbf s-p\\boldsymbol\\alpha)-N^2p^2\\left[1-\\left(\\tfrac{p}{p_0}\\right)^{n}\\right]','p=-\\tfrac{I_1}{3},\\quad \\mathbf s\\ \\text{and}\\ \\boldsymbol\\alpha\\ \\text{in compression-positive convention}'],
+  note:'Bounding-surface model for sands (Dafalias–Manzari 2004, closed by Taiebat–Dafalias 2008). A narrow cone with rotational hardening through the back-stress ratio α plus a cap at p₀. α is a tensor, so the surface is no longer isotropic: here α points along triaxial compression on σ₃.',
+  params:[{k:'N',label:'cone size N',min:0.2,max:0.7,step:0.01,v:0.5},{k:'a',label:'back-stress ratio ‖α‖',min:0,max:0.35,step:0.005,v:0.15},{k:'rho',label:'compacity ρ = 1/(1+e)',min:0.476,max:0.6,step:0.001,v:0.556}],
+  iv:'a',
+  ctr:(xi,P)=>{const p=-xi/S3;return [0.5*p*P.a,0.8660254*p*P.a];},
+  prep:P=>{P._p0=Math.exp((0.901-(1/P.rho-1))/0.25);},
+  evo:['\\dot{\\boldsymbol\\alpha}=\\langle L\\rangle\\,\\tfrac23\\,h\\,\\left(\\boldsymbol\\alpha^b_\\theta-\\boldsymbol\\alpha\\right)','\\boldsymbol\\alpha^b_\\theta=\\sqrt{\\tfrac23}\\left[g(\\theta,c)\\,M_c\\,e^{-n^b\\psi}-N\\right]\\mathbf n','p_0=\\exp\\!\\left(\\tfrac{e_N-e}{\\lambda}\\right),\\qquad \\dot p_0=\\dfrac{1+e}{\\lambda-\\kappa}\\,p_0\\,\\dot\\varepsilon_v^p','\\psi=e-e_c(p),\\quad e_c=e_{c0}-\\lambda_c\\,(p/p_{at})^{\\xi}','\\dot e=-(1+e)\\,\\dot\\varepsilon_v'],
+  evoNote:'The back-stress ratio α moves toward a bounding image α^b whose size depends on the state parameter ψ (dense sand: ψ < 0, larger α^b, dilation). p₀ grows with plastic compaction. Animating α shows the cone rotating toward the compressive meridian; here n = 10. The initial compacity ρ₀ = 1/(1+e₀) fixes p₀ through the compression line (e_N = 0.901, λ = 0.25).',
+  info:P=>`e = ${(1/P.rho-1).toFixed(3)} · p₀ = ${P._p0.toFixed(3)} · ‖α‖ = ${P.a.toFixed(3)}`,
+  F:(I,P)=>{const sg=I.sig,p=-I.I1/3;if(p<=1e-9)return 1;
+    const sc=[-(sg[0]+p),-(sg[1]+p),-(sg[2]+p)],nh=[-1/S6,-1/S6,2/S6];
+    let rr=0;for(let k=0;k<3;k++){const r=sc[k]-p*P.a*nh[k];rr+=r*r;}
+    const g=1-Math.pow(p/P._p0,10);if(g<=0)return Math.sqrt(rr)+1e-6;
+    return Math.sqrt(rr)-P.N*p*Math.sqrt(g);}}
+];
+const PV={};MODELS.forEach(m=>{PV[m.id]={};m.params.forEach(p=>PV[m.id][p.k]=p.v);});
+/* compaction coupling: how plastic compaction ε_c = -tr ε^p moves each model's internal variable */
+const COMP={
+ mcc:{k:'rho',map:(v,e)=>Math.min(0.9995,v*Math.exp(e)),rho:P=>P.rho,dil:0.476},
+ dpc:{k:'rho',map:(v,e)=>Math.min(0.9995,v*Math.exp(e)),rho:P=>P.rho,dil:0.5},
+ ds:{k:'rho',map:(v,e)=>Math.min(0.9995,v*Math.exp(e)),rho:P=>P.rho,dil:0.5},
+ kd:{k:'rho',map:(v,e)=>Math.min(0.999,v*Math.exp(e)),rho:P=>P.rho,dil:0.55},
+ sanisand:{k:'rho',map:(v,e)=>Math.min(0.9995,v*Math.exp(e)),rho:P=>P.rho,dil:0.476},
+ gurson:{k:'f',map:(v,e)=>Math.max(0.0005,1-(1-v)*Math.exp(e)),rho:P=>1-P.f,dil:1-0.99/1.5}
+};
+MODELS.forEach(m=>{if(COMP[m.id])m.comp=COMP[m.id];});
+const PATHS=[
+ {id:'ut',name:'Uniaxial tension',d:[1,0,0],col:'#d1495b'},
+ {id:'uc',name:'Uniaxial compression',d:[-1,0,0],col:'#2e86ab'},
+ {id:'bt',name:'Equibiaxial tension',d:[1,1,0],col:'#e07a1f'},
+ {id:'bc',name:'Equibiaxial compression',d:[-1,-1,0],col:'#3a8d4a'},
+ {id:'sh',name:'Pure shear',d:[1,-1,0],col:'#8e5ad6'},
+ {id:'hc',name:'Hydrostatic compression',d:[-1,-1,-1],col:'#7a8794'},
+ {id:'cc',name:'Confined compression (K₀ = 0.5)',d:[-0.5,-0.5,-1],col:'#c2185b'}
+];
+PATHS.forEach(q=>{const n=Math.hypot(...q.d);q.u=q.d.map(x=>x/n);q.on=true;});
+const LMAX=5,RHO_END=0.999,NSTEP=140,VIEWL=5.5;
+/* Density-driven proportional path: march the compacity from its initial value to RHO_END and,
+   for each state, find the stress magnitude that keeps σ = λ·d on the hardened surface (f = 0). */
+function runPath(m,P0,u){
+  const c=m.comp,v0=P0[c.k];
+  const Pat=e=>{const P=Object.assign({},P0);P[c.k]=c.map(v0,e);if(m.prep)m.prep(P);return P;};
+  const fAt=(lam,P)=>m.F(inv([lam*u[0],lam*u[1],lam*u[2]]),P);
+  const lamRoot=P=>{if(!(fAt(1e-6,P)<0))return 0;let lo=0,hi=0.05;
+    while(fAt(hi,P)<0){lo=hi;hi*=1.25;if(hi>1e4)return Infinity;}
+    for(let k=0;k<44;k++){const mid=(lo+hi)/2;if(fAt(mid,P)<0)lo=mid;else hi=mid;}return hi;};
+  const P00=Pat(0),r0=c.rho(P00);
+  const ly=lamRoot(P00);
+  if(ly===0)return {pts:[[0,0]],states:[[0,v0]],yieldL:0,fail:0,full:false};
+  if(!isFinite(ly))return {pts:[[0,0],[LMAX,0]],states:[[0,v0],[LMAX,v0]],yieldL:null,fail:null,full:false};
+  const pts=[[0,0],[ly,0]],states=[[0,v0],[ly,v0]];let prevL=ly,prevP=P00,fail=null,full=false;
+  for(let k=1;k<=NSTEP;k++){
+    const sg=[prevL*u[0],prevL*u[1],prevL*u[2]],h=1e-5*Math.max(1,prevL);let tr=0;
+    for(let i=0;i<3;i++){const A=sg.slice(),B=sg.slice();A[i]+=h;B[i]-=h;tr+=(m.F(inv(A),prevP)-m.F(inv(B),prevP))/(2*h);}
+    if(!(-tr>1e-7)){if(k===1&&c.dil&&tr>1e-7)return dilPath(m,P0,u,Pat,lamRoot,r0,ly,v0);fail=prevL;break;}
+    const rk=1-(1-r0)*Math.pow((1-RHO_END)/(1-r0),k/NSTEP),e=Math.log(rk/r0),P=Pat(e),lk=lamRoot(P);
+    if(!isFinite(lk)||lk<prevL-1e-9){fail=prevL;break;}
+    pts.push([lk,e]);states.push([lk,P[c.k]]);prevL=lk;prevP=P;if(k===NSTEP)full=true;}
+  return {pts,states,yieldL:ly,fail,full};}
+
+/* dilatant branch: plastic flow increases volume, so the compacity falls toward the loosest state c.dil
+   (voids grow in porous metals, granular media loosen); ends at c.dil, at an isochoric (critical) state, or at loss of strength */
+function trN(m,P,L,u){const sg=[L*u[0],L*u[1],L*u[2]],h=1e-5*Math.max(1,L);let tr=0;
+  for(let i=0;i<3;i++){const A=sg.slice(),B=sg.slice();A[i]+=h;B[i]-=h;tr+=(m.F(inv(A),P)-m.F(inv(B),P))/(2*h);}return tr;}
+function dilPath(m,P0,u,Pat,lamRoot,r0,ly,v0){
+  const c=m.comp,pts=[[0,0],[ly,0]],states=[[0,v0],[ly,v0]];let end='floor';
+  if(!(c.dil<r0-1e-4))return {pts,states,yieldL:ly,fail:null,full:false,soft:true,end};
+  for(let k=1;k<=NSTEP;k++){
+    const rk=r0+(c.dil-r0)*k/NSTEP,e=Math.log(rk/r0),P=Pat(e),lk=lamRoot(P);
+    if(!(lk>1e-3)||!isFinite(lk)){end='collapse';break;}
+    pts.push([lk,e]);states.push([lk,P[c.k]]);
+    if(!(trN(m,P,lk,u)>1e-7)){end='cs';break;}}
+  return {pts,states,yieldL:ly,fail:null,full:false,soft:true,end};}
+/* polar convexity test of the Bai–Wierzbicki Lode factor L(θ) (the pressure term only scales the π-plane section) */
+function bwConvex(P){const N=720,h=2*PI/N,r=[];
+  for(let i=0;i<N;i++){const t=-PI+i*h,th=Math.asin(Math.max(-1,Math.min(1,Math.sin(3*t))))/3,tb=1-6/PI*(th+PI/6),g=6.464101615*(1/Math.cos(th)-1);
+    r.push(P.cs+((tb>=0?1:P.cc)-P.cs)*(g-Math.pow(g,7)/7));}
+  for(let i=0;i<N;i++){const a=r[(i+N-1)%N],b=r[i],c=r[(i+1)%N],d1=(c-a)/(2*h),d2=(c-2*b+a)/(h*h);if(b*b+2*d1*d1-b*d2<-1e-6)return false;}
+  return true;}
+function updateWarn(){const el=document.getElementById('warn'),w=cur.warn?cur.warn(PV[cur.id]):null;el.hidden=!w;el.textContent=w||'';}
+function evalF(m,P,xi,rho,om){return m.F(inv(point(xi,rho,om,ctrOf(m,P,xi))),P);}
+function rhoAt(m,P,xi,om){
+  if(!(evalF(m,P,xi,0,om)<0))return 0;
+  const N=56;let lo=0;
+  for(let i=1;i<=N;i++){const q=i/N,r=RMAX*q*q,v=evalF(m,P,xi,r,om);
+    if(!(v<0)){let a=lo,b=r;for(let k=0;k<22;k++){const c=(a+b)/2;if(evalF(m,P,xi,c,om)<0)a=c;else b=c;}return (a+b)/2;}
+    lo=r;}
+  return RMAX;}
+function domainOf(m,P){
+  const st=0.05;let lo=null,hi=null;
+  for(let x=-SCAN;x<=SCAN+1e-9;x+=st){if(evalF(m,P,x,0,0)<0){if(lo===null)lo=x;hi=x;}}
+  if(lo===null)return null;
+  const ref=(a,b)=>{for(let k=0;k<30;k++){const c=(a+b)/2;if(evalF(m,P,c,0,0)<0)b=c;else a=c;}return b;};
+  let loC=lo>-SCAN+1e-6,hiC=hi<SCAN-1e-6;
+  if(loC)lo=ref(lo-st,lo);else lo=-OPEN;
+  if(hiC){let a=hi,b=hi+st;for(let k=0;k<30;k++){const c=(a+b)/2;if(evalF(m,P,c,0,0)<0)a=c;else b=c;}hi=a;}else hi=OPEN;
+  return {lo,hi,loC,hiC};}
+
+/* ---------- surface grid ---------- */
+function buildPositions(m,P){
+  if(m.prep)m.prep(P);
+  const out=new Float32Array((NX+1)*NT*3),D=domainOf(m,P);
+  if(!D)return {pos:out,D:null};
+  for(let i=0;i<=NX;i++){const t=i/NX;let u;
+    if(D.loC&&D.hiC)u=(1-Math.cos(PI*t))/2;else if(D.hiC)u=Math.sin(PI*t/2);else if(D.loC)u=1-Math.cos(PI*t/2);else u=t;
+    const xi=D.lo+(D.hi-D.lo)*u,endC=(i===0&&D.loC)||(i===NX&&D.hiC);
+    const C=ctrOf(m,P,xi)||[0,0];
+    for(let j=0;j<NT;j++){const om=2*PI*j/NT,r=endC?0:rhoAt(m,P,xi,om),o=(i*NT+j)*3;
+      out[o]=C[0]+r*Math.cos(om);out[o+1]=xi;out[o+2]=-(C[1]+r*Math.sin(om));}}
+  return {pos:out,D};}
+
+/* ---------- theme tokens ---------- */
+const css=()=>getComputedStyle(document.documentElement);
+function tok(n){return css().getPropertyValue(n).trim();}
+
+/* ---------- navigation ---------- */
+const nav=document.getElementById('nav');
+const btns={};
+CATS.forEach((c,ci)=>{
+  const g=document.createElement('div');g.className='group';g.style.setProperty('--gc',`var(${c.col})`);
+  g.innerHTML=`<div class="ghead"><span class="gs">${c.sub}</span><span class="gt">${c.name}</span><p>${c.blurb}</p></div><div class="mlist"></div>`;
+  const list=g.querySelector('.mlist');
+  MODELS.filter(m=>m.cat===ci).forEach(m=>{
+    const b=document.createElement('button');b.type='button';b.className='mbtn';b.setAttribute('aria-pressed','false');
+    b.innerHTML=`<span>${m.name}</span><span class="chips">${['I₁','J₂','J₃'].map((s,k)=>`<span class="chip${m.uses[k]?' on':''}">${s}</span>`).join('')}</span>`;
+    b.addEventListener('click',()=>{stopTour();select(m.id,true);});
+    list.appendChild(b);btns[m.id]=b;});
+  nav.appendChild(g);});
+
+/* ---------- original references (a = authors, y = year, t = title, s = source) ---------- */
+const REFS={
+ mises:[{a:'R. von Mises',y:1913,t:'Mechanik der festen Körper im plastisch-deformablen Zustand',s:'Nachr. Ges. Wiss. Göttingen, Math.-Phys. Kl., 582–592'}],
+ tresca:[{a:'H. Tresca',y:1864,t:"Sur l'écoulement des corps solides soumis à de fortes pressions",s:'C. R. Acad. Sci. Paris 59, 754–758'}],
+ drucker49:[{a:'D. C. Drucker',y:1949,t:'Relation of experiments to mathematical theories of plasticity',s:'J. Appl. Mech. 16, 349–357'}],
+ hosford:[{a:'W. F. Hosford',y:1972,t:'A generalized isotropic yield criterion',s:'J. Appl. Mech. 39(2), 607–609'}],
+ dp:[{a:'D. C. Drucker, W. Prager',y:1952,t:'Soil mechanics and plastic analysis or limit design',s:'Q. Appl. Math. 10(2), 157–165'}],
+ mc:[{a:'C. A. Coulomb',y:1776,t:'Essai sur une application des règles de maximis et minimis à quelques problèmes de statique relatifs à l’architecture',s:'Mém. Math. Phys. Acad. R. Sci. 7, 343–382'},
+     {a:'O. Mohr',y:1900,t:'Welche Umstände bedingen die Elastizitätsgrenze und den Bruch eines Materials?',s:'Z. Ver. Dtsch. Ing. 44, 1524–1530'}],
+ ld:[{a:'P. V. Lade, J. M. Duncan',y:1975,t:'Elastoplastic stress-strain theory for cohesionless soil',s:'J. Geotech. Eng. Div. ASCE 101(GT10), 1037–1053'}],
+ mn:[{a:'H. Matsuoka, T. Nakai',y:1974,t:'Stress-deformation and strength characteristics of soil under three different principal stresses',s:'Proc. JSCE 232, 59–70'}],
+ hb:[{a:'E. Hoek, E. T. Brown',y:1980,t:'Empirical strength criterion for rock masses',s:'J. Geotech. Eng. Div. ASCE 106(GT9), 1013–1035'}],
+ ww:[{a:'K. J. Willam, E. P. Warnke',y:1975,t:'Constitutive model for the triaxial behaviour of concrete',s:'IABSE Proc. 19, Seminar on concrete structures subjected to triaxial stresses, Bergamo, 1–30'}],
+ ottosen:[{a:'N. S. Ottosen',y:1977,t:'A failure criterion for concrete',s:'J. Eng. Mech. Div. ASCE 103(EM4), 527–535'}],
+ mcc:[{a:'K. H. Roscoe, J. B. Burland',y:1968,t:'On the generalised stress-strain behaviour of “wet” clay',s:'in Engineering Plasticity (J. Heyman, F. A. Leckie, eds.), Cambridge Univ. Press, 535–609'}],
+ gurson:[{a:'A. L. Gurson',y:1977,t:'Continuum theory of ductile rupture by void nucleation and growth: Part I. Yield criteria and flow rules for porous ductile media',s:'J. Eng. Mater. Technol. 99(1), 2–15'},
+         {a:'V. Tvergaard, A. Needleman',y:1984,t:'Analysis of the cup-cone fracture in a round tensile bar',s:'Acta Metall. 32(1), 157–169'}],
+ dpc:[{a:'D. C. Drucker, R. E. Gibson, D. J. Henkel',y:1957,t:'Soil mechanics and work-hardening theories of plasticity',s:'Trans. ASCE 122, 338–346'},
+      {a:'R. W. Heckel',y:1961,t:'Density-pressure relationships in powder compaction',s:'Trans. Metall. Soc. AIME 221, 671–675'}],
+ ds:[{a:'F. L. DiMaggio, I. S. Sandler',y:1971,t:'Material model for granular soils',s:'J. Eng. Mech. Div. ASCE 97(EM3), 935–950'}],
+ kd:[{a:'H. A. Kuhn, C. L. Downey',y:1971,t:'Deformation characteristics and plasticity theory of sintered powder materials',s:'Int. J. Powder Metall. 7(1), 15–25'}],
+ cb:[{a:'O. Cazacu, F. Barlat',y:2004,t:'A criterion for description of anisotropy and yield differential effects in pressure-insensitive metals',s:'Int. J. Plast. 20(11), 2027–2045'},
+     {a:'O. Cazacu, B. Plunkett, F. Barlat',y:2006,t:'Orthotropic yield criterion for hexagonal closed packed metals',s:'Int. J. Plast. 22(7), 1171–1194'}],
+ bw:[{a:'Y. Bai, T. Wierzbicki',y:2008,t:'A new model of metal plasticity and fracture with pressure and Lode dependence',s:'Int. J. Plast. 24(6), 1071–1096'},
+     {a:'Y. Bai, T. Wierzbicki',y:2010,t:'Application of extended Mohr–Coulomb criterion to ductile fracture',s:'Int. J. Fract. 161, 1–20'}],
+ sanisand:[{a:'M. Taiebat, Y. F. Dafalias',y:2008,t:'SANISAND: Simple anisotropic sand plasticity model',s:'Int. J. Numer. Anal. Methods Geomech. 32(8), 915–948'}]
+};
+function renderRef(){const el=document.getElementById('ref'),R=REFS[cur.id];el.hidden=!R;if(!R)return;
+  const esc=x=>x.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  el.innerHTML='<b>Original paper'+(R.length>1?'s':'')+'.</b> '+R.map(r=>`${esc(r.a)} (${r.y}). <a href="https://scholar.google.com/scholar?q=${encodeURIComponent(r.t+' '+r.a.split(',')[0])}" target="_blank" rel="noopener">${esc(r.t)}</a>. <i>${esc(r.s)}</i>.`).join(' ');}
+
+/* ---------- three.js scene ---------- */
+const host=document.getElementById('three');
+let renderer;
+for(const o of [{antialias:true},{antialias:false},{antialias:false,powerPreference:'low-power',precision:'mediump'}]){try{renderer=new THREE.WebGLRenderer(o);break;}catch(e){}}
+if(!renderer)host.innerHTML='<p class="err">The 3D view needs WebGL, and this browser refused to create a WebGL context. Usual causes: hardware acceleration is off, the graphics driver is blocklisted, or WebGL is disabled in the browser settings (in Firefox, check about:support and the webgl.disabled setting in about:config). The equations, the 2D sections and the loading paths still work.</p>';
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(36,1,0.1,100);
+camera.position.set(10.6,4.4,10.6);camera.zoom=1.35;camera.updateProjectionMatrix();
+let controls=null;
+if(renderer){renderer.setPixelRatio(Math.min(devicePixelRatio,2));host.appendChild(renderer.domElement);
+  controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.target.set(0,-0.5,0);controls.enableDamping=true;controls.enablePan=false;
+  controls.minDistance=6;controls.maxDistance=26;controls.autoRotate=!reduce;controls.autoRotateSpeed=1.1;}
+scene.add(new THREE.AmbientLight(0xffffff,0.62));
+const dl=new THREE.DirectionalLight(0xffffff,0.7);dl.position.set(3,4,2);camera.add(dl);scene.add(camera);
+
+const posAttr=new THREE.BufferAttribute(new Float32Array((NX+1)*NT*3),3);
+const idx=[];for(let i=0;i<NX;i++)for(let j=0;j<NT;j++){const a=i*NT+j,b=i*NT+(j+1)%NT,c=(i+1)*NT+j,d=(i+1)*NT+(j+1)%NT;idx.push(a,c,b,b,c,d);}
+const surfGeo=new THREE.BufferGeometry();surfGeo.setAttribute('position',posAttr);surfGeo.setIndex(idx);
+const surfMat=new THREE.MeshPhongMaterial({color:0x888888,transparent:true,opacity:0.5,side:THREE.DoubleSide,shininess:40,depthWrite:false});
+const surf=new THREE.Mesh(surfGeo,surfMat);scene.add(surf);
+const lidx=[];
+for(let j=0;j<NT;j+=NT/12)for(let i=0;i<NX;i++)lidx.push(i*NT+j,(i+1)*NT+j);
+for(let i=0;i<=NX;i+=8)for(let j=0;j<NT;j++)lidx.push(i*NT+j,i*NT+(j+1)%NT);
+const wireGeo=new THREE.BufferGeometry();wireGeo.setAttribute('position',posAttr);wireGeo.setIndex(lidx);
+const wireMat=new THREE.LineBasicMaterial({color:0x444444,transparent:true,opacity:0.55});
+scene.add(new THREE.LineSegments(wireGeo,wireMat));
+
+/* overlay surface */
+const posAttr2=new THREE.BufferAttribute(new Float32Array((NX+1)*NT*3),3);
+const surfGeo2=new THREE.BufferGeometry();surfGeo2.setAttribute('position',posAttr2);surfGeo2.setIndex(idx);
+const surfMat2=new THREE.MeshPhongMaterial({color:0x888888,transparent:true,opacity:0.3,side:THREE.DoubleSide,shininess:30,depthWrite:false});
+const surf2=new THREE.Mesh(surfGeo2,surfMat2);scene.add(surf2);
+const wireGeo2=new THREE.BufferGeometry();wireGeo2.setAttribute('position',posAttr2);wireGeo2.setIndex(lidx);
+const wireMat2=new THREE.LineBasicMaterial({color:0x444444,transparent:true,opacity:0.6});
+const wire2=new THREE.LineSegments(wireGeo2,wireMat2);scene.add(wire2);
+surf2.visible=wire2.visible=false;
+
+/* plane-stress cut sigma3 = 0 */
+const NPS=240;
+function mkCut(){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(NPS*3),3));
+  const m=new THREE.LineDashedMaterial({color:0x000000,dashSize:0.12,gapSize:0.07});const l=new THREE.LineLoop(g,m);l.visible=false;scene.add(l);return l;}
+const cutL1=mkCut(),cutL2=mkCut();
+const cutPlane=new THREE.Mesh(new THREE.CircleGeometry(4.2,72),new THREE.MeshBasicMaterial({color:0x888888,transparent:true,opacity:0.05,side:THREE.DoubleSide,depthWrite:false}));
+scene.add(cutPlane);
+function toWorld(a,b,c){const xi=(a+b+c)/S3,c1=(2*a-b-c)/S6,c2=(b-c)/S2;return new THREE.Vector3(c1,xi,-c2);}
+const pathGroup=new THREE.Group();scene.add(pathGroup);
+const marker=new THREE.Mesh(new THREE.SphereGeometry(0.07,16,12),new THREE.MeshBasicMaterial({color:0x000000,depthTest:false}));marker.visible=false;marker.renderOrder=5;scene.add(marker);
+
+/* axes */
+const axisGroup=new THREE.Group();scene.add(axisGroup);
+const AL=4.3;
+function axisDir(k){const om=2*PI*k/3;return new THREE.Vector3(Math.sqrt(2/3)*Math.cos(om),1/S3,-Math.sqrt(2/3)*Math.sin(om));}
+let labels=[];
+function makeLabel(text,color){
+  const c=document.createElement('canvas'),F='600 54px "JetBrains Mono", ui-monospace, monospace';let g=c.getContext('2d');g.font=F;
+  const w=Math.max(256,Math.ceil(g.measureText(text).width)+24);c.width=w;c.height=96;g=c.getContext('2d');
+  g.font=F;g.fillStyle=color;g.textAlign='center';g.textBaseline='middle';g.fillText(text,w/2,48);c._w=w;
+  const t=new THREE.CanvasTexture(c);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));
+  sp.scale.set(0.9*c._w/256,0.34,1);return sp;}
+function buildAxes(){
+  while(axisGroup.children.length){const o=axisGroup.children.pop();o.geometry&&o.geometry.dispose();o.material&&(o.material.map&&o.material.map.dispose(),o.material.dispose());}
+  const fg=tok('--fg'),mu=tok('--muted');
+  const pm=new THREE.LineBasicMaterial({color:new THREE.Color(fg),transparent:true,opacity:0.75});
+  const nm=new THREE.LineBasicMaterial({color:new THREE.Color(mu),transparent:true,opacity:0.35});
+  for(let k=0;k<3;k++){const d=axisDir(k);
+    axisGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),d.clone().multiplyScalar(AL)]),pm));
+    axisGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),d.clone().multiplyScalar(-AL)]),nm));
+    const l=makeLabel(['+σ₁','+σ₂','+σ₃'][k],fg);l.position.copy(d.clone().multiplyScalar(AL+0.35));axisGroup.add(l);}
+  const hm=new THREE.LineDashedMaterial({color:new THREE.Color(mu),dashSize:0.15,gapSize:0.1});
+  const h=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-4.9,0),new THREE.Vector3(0,4.9,0)]),hm);h.computeLineDistances();axisGroup.add(h);
+  const l1=makeLabel('ξ (tension)',mu);l1.position.set(0,5.2,0);axisGroup.add(l1);
+  const l2=makeLabel('compression',mu);l2.position.set(0,-5.2,0);axisGroup.add(l2);
+}
+
+/* slice ring + plane */
+const NR=180;
+const ringGeo=new THREE.BufferGeometry();ringGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(NR*3),3));
+const ringMat=new THREE.LineBasicMaterial({color:0x000000});
+const ring=new THREE.LineLoop(ringGeo,ringMat);scene.add(ring);
+const ringGeo2=new THREE.BufferGeometry();ringGeo2.setAttribute('position',new THREE.BufferAttribute(new Float32Array(NR*3),3));
+const ringMat2=new THREE.LineBasicMaterial({color:0x000000});
+const ring2=new THREE.LineLoop(ringGeo2,ringMat2);ring2.visible=false;scene.add(ring2);
+const disk=new THREE.Mesh(new THREE.CircleGeometry(3.6,72).rotateX(-PI/2),new THREE.MeshBasicMaterial({color:0x888888,transparent:true,opacity:0.045,side:THREE.DoubleSide,depthWrite:false}));
+scene.add(disk);
+
+/* ---------- state ---------- */
+let cur=MODELS[0],D=null,targetPos=null,fromPos=null,morphT=1,morphStart=0;const MORPH=reduce?0:850;
+let xiS=-1,sweep=!reduce,sweepPhase=0,tour=false,tourLast=0;
+let section=new Float32Array(NR),merT=[],merC=[];
+let secC1=[0,0],secC2=[0,0],ivAnim=false,ivPh=0,ivLast=0;
+let ov=null,D2=null,section2=new Float32Array(NR),merT2=[],merC2b=[],in2=false;
+
+function catColor(){return tok(CATS[cur.cat].col);}
+function applyTheme(){
+  if(!renderer)return;
+  scene.background=new THREE.Color(tok('--panel'));
+  const cc=new THREE.Color(catColor());surfMat.color=cc;ringMat.color=cc;
+  wireMat.color=new THREE.Color(tok('--fg'));wireMat.opacity=0.28;
+  disk.material.color=new THREE.Color(tok('--fg'));
+  const oc=new THREE.Color(tok('--ov'));surfMat2.color=oc;wireMat2.color=oc;ringMat2.color=oc;cutL2.material.color=oc;cutL1.material.color=cc;cutPlane.material.color=new THREE.Color(tok('--fg'));
+  {const n=axisDir(2);cutPlane.lookAt(n);}
+  buildAxes();}
+
+const tx=t=>{try{return katex.renderToString(t,{output:'mathml',displayMode:true,throwOnError:false});}catch(e){return `<code>${t}</code>`;}};
+function renderEvo(){
+  const card=document.getElementById('evoCard');card.hidden=!cur.evo;stopEvo();
+  if(!cur.evo)return;
+  document.getElementById('evoEq').innerHTML=cur.evo.map(t=>`<div>${tx(t)}</div>`).join('');
+  document.getElementById('evoNote').textContent=cur.evoNote||'';
+  const ivp=cur.params.find(q=>q.k===cur.iv);document.getElementById('bEvo').textContent='▶ Animate '+(ivp?ivp.label.replace(/ \(.*\)/,''):'hardening');}
+/* ---------- loading paths ---------- */
+let pathRes=[],selPath=1,running=false,runT=0,runSave=null,runLam=null,runLast=0;
+const pathC=document.getElementById('pathC');
+function renderPathChips(){
+  const box=document.getElementById('pathChips');box.innerHTML='';
+  PATHS.forEach((q,i)=>{const b=document.createElement('button');b.type='button';b.className='pchip'+(q.on?'':' off');b.style.setProperty('--pc',q.col);
+    b.setAttribute('aria-pressed',i===selPath?'true':'false');b.innerHTML=`<i title="show or hide"></i><span>${q.name}</span>`;
+    b.querySelector('i').addEventListener('click',ev=>{ev.stopPropagation();q.on=!q.on;renderPathChips();build3DPaths();drawPath();drawPS();});
+    b.addEventListener('click',()=>{selPath=i;q.on=true;renderPathChips();build3DPaths();drawPath();drawPS();updatePathInfo();});
+    box.appendChild(b);});}
+function computePaths(){
+  const card=document.getElementById('pathCard');card.hidden=!cur.comp;document.getElementById('tPath').hidden=!cur.comp;
+  document.getElementById('plots').classList.toggle('n4',!!cur.comp);document.getElementById('center').classList.toggle('n4',!!cur.comp);
+  pathRes=[];if(!cur.comp){build3DPaths();return;}
+  const P0={};Object.keys(PV[cur.id]).forEach(k=>{if(k[0]!=='_')P0[k]=PV[cur.id][k];});
+  pathRes=PATHS.map(q=>runPath(cur,P0,q.u));
+  build3DPaths();drawPath();updatePathInfo();}
+function pathEnd(r){return r.fail!==null?r.fail:Math.max(...r.pts.map(p=>p[0]));}
+function updatePathInfo(){const el=document.getElementById('pathInfo');const r=pathRes[selPath];document.getElementById('pathSel').textContent=r?'selected: '+PATHS[selPath].name:'';if(!r){el.textContent='';return;}
+  const e=r.pts[r.pts.length-1][1];
+  if(r.fail===0){el.textContent='no elastic range on this path: the material is cohesionless at the origin';return;}
+  if(r.yieldL===null){el.textContent='no yield on this path';return;}
+  const rr=cur.comp.rho(Object.assign({},PV[cur.id],{[cur.comp.k]:r.states[r.states.length-1][1]}));
+  if(r.soft){const lE=r.pts[r.pts.length-1][0],why={floor:'loosest state reached',cs:'flow turns isochoric (critical state)',collapse:'loss of strength'}[r.end],
+    trend=lE<r.yieldL-0.005?'softening':lE>r.yieldL+0.005?'hardening':'constant stress';
+    el.textContent=`yield at ‖σ‖ = ${r.yieldL.toFixed(2)} · dilatant: compacity falls to ρ = ${rr.toFixed(3)}${cur.comp.k==='f'?' (f = '+(1-rr).toFixed(3)+')':''} with ${trend}, ‖σ‖ = ${lE.toFixed(2)} at the end · ${why} · ε_v^p = ${e.toFixed(3)}`;return;}
+  el.textContent=`yield at ‖σ‖ = ${r.yieldL.toFixed(2)} · ${r.full?'full density (ρ = '+RHO_END+') at ‖σ‖ = '+pathEnd(r).toFixed(1):'limit at ‖σ‖ = '+r.fail.toFixed(2)+', ρ = '+rr.toFixed(3)} · ε_v^p = ${e.toFixed(3)}`;}
+function build3DPaths(){
+  while(pathGroup.children.length){const o=pathGroup.children.pop();o.geometry.dispose();o.material.dispose();}
+  if(!cur.comp||!pathRes.length)return;
+  PATHS.forEach((q,i)=>{if(!q.on)return;const r=pathRes[i],L=Math.min(VIEWL,Math.max(0.05,pathEnd(r)));
+    const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),toWorld(L*q.u[0],L*q.u[1],L*q.u[2])]);
+    const ln=new THREE.Line(g,new THREE.LineBasicMaterial({color:new THREE.Color(q.col),transparent:true,opacity:i===selPath?1:0.55,depthTest:false}));ln.renderOrder=4;pathGroup.add(ln);
+    const s=new THREE.Mesh(new THREE.SphereGeometry(r.fail!==null?0.06:0.04,12,8),new THREE.MeshBasicMaterial({color:new THREE.Color(q.col),depthTest:false}));
+    s.position.copy(toWorld(L*q.u[0],L*q.u[1],L*q.u[2]));s.renderOrder=4;pathGroup.add(s);});}
+function drawPath(){
+  if(!cur.comp||!pathRes.length)return;
+  const d=fit(pathC),g=pathC.getContext('2d'),W=pathC.width,H=pathC.height;g.clearRect(0,0,W,H);
+  const fg=tok('--fg'),mu=tok('--muted'),gr=tok('--grid');
+  const rhoF=cur.comp.rho;const P0={};Object.keys(PV[cur.id]).forEach(k=>{P0[k]=PV[cur.id][k];});
+  let eMax=0.005,eMin=0;pathRes.forEach((r,i)=>{if(PATHS[i].on)r.pts.forEach(([,e])=>{eMax=Math.max(eMax,e);eMin=Math.min(eMin,e);});});eMax*=1.1;eMin*=1.1;
+  const rhoOf=(i,j)=>{const r=pathRes[i];if(rhoF){const P=Object.assign({},P0);P[cur.comp.k]=r.states[j][1];return rhoF(P);}return Math.exp(r.pts[j][1]);};
+  let rMin=Infinity,rMax=-Infinity;pathRes.forEach((r,i)=>{if(!PATHS[i].on)return;r.pts.forEach((_,j)=>{const v=rhoOf(i,j);rMin=Math.min(rMin,v);rMax=Math.max(rMax,v);});});
+  rMax=Math.max(rMax,1);if(!isFinite(rMin)){rMin=0.9;rMax=1.1;}if(rMax-rMin<0.01){rMin-=0.005;rMax+=0.005;}const pad0=(rMax-rMin)*0.06;rMin-=pad0;rMax+=pad0*0.3;
+  let xMax=LMAX;pathRes.forEach((r,i)=>{if(PATHS[i].on)xMax=Math.max(xMax,pathEnd(r)*1.15);});
+  const xMin=0.1,lx=Math.log10(xMin),ux=Math.log10(xMax);rMax=Math.max(rMax,1);
+  const L=44*d,Rr=8*d,wide=W>1.35*H,bot=30*d,topP=8*d;
+  const PA=wide?{x0:L,x1:W/2-12*d,top:topP,h:H-topP-bot}:{x0:L,x1:W-Rr,top:topP,h:(H-topP-bot-22*d)/2};
+  const PB=wide?{x0:W/2+L-8*d,x1:W-Rr,top:topP,h:H-topP-bot}:{x0:L,x1:W-Rr,top:PA.top+PA.h+22*d,h:PA.h};
+  const Xf=P=>l=>P.x0+(Math.log10(Math.max(xMin,l))-lx)/(ux-lx)*(P.x1-P.x0),XA=Xf(PA),XB=Xf(PB);
+  const ticks=[];for(let dec=-1;dec<=4;dec++)[1,2,5].forEach(m=>{const v=m*Math.pow(10,dec);if(v>=xMin-1e-9&&v<=xMax)ticks.push(v);});
+  g.font=`${10*d}px "JetBrains Mono", monospace`;
+  const panel=(P,X,ylab,fmt,ymin,ymax,showX)=>{
+    g.strokeStyle=gr;g.lineWidth=d;
+    for(let k=0;k<=4;k++){const y=P.top+P.h-k/4*P.h;g.beginPath();g.moveTo(P.x0,y);g.lineTo(P.x1,y);g.stroke();g.fillStyle=mu;g.textAlign='right';g.textBaseline='middle';g.fillText(fmt(ymin+(ymax-ymin)*k/4),P.x0-4*d,y);}
+    ticks.forEach(l=>{g.beginPath();g.moveTo(X(l),P.top);g.lineTo(X(l),P.top+P.h);g.stroke();});
+    g.strokeStyle=mu;g.strokeRect(P.x0,P.top,P.x1-P.x0,P.h);
+    g.fillStyle=fg;g.textAlign='left';g.textBaseline='top';g.fillText(ylab,P.x0+5*d,P.top+4*d);
+    if(showX){g.fillStyle=mu;g.textAlign='center';g.textBaseline='top';ticks.forEach(l=>{const mm=Math.round(l/Math.pow(10,Math.floor(Math.log10(l)+1e-9)));if(mm!==2)g.fillText(+l.toPrecision(2),X(l),P.top+P.h+4*d);});
+      g.fillText('‖σ‖ (log)',(P.x0+P.x1)/2,P.top+P.h+15*d);}};
+  panel(PA,XA,eMin<0?'ε_v^p (compaction +, dilation −)':'compaction ε_v^p',v=>v.toFixed(2),eMin,eMax,wide);
+  panel(PB,XB,rhoF?'compacity ρ_r':'ρ/ρ₀',v=>v.toFixed(2),rMin,rMax,true);
+  const YA=e=>PA.top+PA.h-(e-eMin)/(eMax-eMin)*PA.h,YB=v=>PB.top+PB.h-(v-rMin)/(rMax-rMin)*PB.h;
+  const order=PATHS.map((_,i)=>i).filter(i=>i!==selPath).concat([selPath]);
+  order.forEach(i=>{const q=PATHS[i],r=pathRes[i];if(!q.on)return;
+    g.strokeStyle=q.col;g.lineWidth=(i===selPath?2.6:1.6)*d;
+    g.beginPath();r.pts.forEach(([l,e],j)=>j?g.lineTo(XA(l),YA(e)):g.moveTo(XA(l),YA(e)));g.stroke();
+    g.beginPath();r.pts.forEach(([l],j)=>{const y=YB(rhoOf(i,j));j?g.lineTo(XB(l),y):g.moveTo(XB(l),y);});g.stroke();
+    if(r.fail!==null||r.soft){const j=r.pts.length-1,mk=(x,y)=>{const a=4*d;g.beginPath();g.moveTo(x-a,y-a);g.lineTo(x+a,y+a);g.moveTo(x+a,y-a);g.lineTo(x-a,y+a);g.stroke();};
+      g.lineWidth=2*d;const lf=r.fail!==null?r.fail:r.pts[j][0];mk(XA(lf),YA(r.pts[j][1]));mk(XB(lf),YB(rhoOf(i,j)));}});
+  if(runLam!==null){g.strokeStyle=fg;g.setLineDash([3*d,3*d]);g.lineWidth=d;[[PA,XA],[PB,XB]].forEach(([P,X])=>{g.beginPath();g.moveTo(X(runLam),P.top);g.lineTo(X(runLam),P.top+P.h);g.stroke();});g.setLineDash([]);}}
+function startRun(){const r=pathRes[selPath];if(!r||!cur.comp)return;stopEvo();stopTour();
+  runSave=Object.assign({},PV[cur.id]);running=true;runT=0;runLam=0;document.getElementById('bReset').disabled=false;
+  document.getElementById('bRun').setAttribute('aria-pressed','true');marker.visible=true;}
+function endRun(){running=false;document.getElementById('bRun').setAttribute('aria-pressed','false');}
+function resetRun(){if(!runSave)return;endRun();Object.assign(PV[cur.id],runSave);runSave=null;runLam=null;marker.visible=false;
+  document.getElementById('bReset').disabled=true;renderEq();rebuild(false);}
+document.getElementById('bRun').addEventListener('click',()=>{if(running){endRun();return;}if(runSave)resetRun();startRun();});
+document.getElementById('bReset').addEventListener('click',resetRun);
+function stepRun(dt,now){
+  const r=pathRes[selPath],q=PATHS[selPath],Lend=Math.max(0.05,pathEnd(r));
+  runT=Math.min(1,runT+dt/7);const n=r.states.length,ft=runT*(n-1),j=Math.min(n-1,Math.floor(ft));
+  runLam=j<n-1?r.states[j][0]+(r.states[j+1][0]-r.states[j][0])*(ft-j):r.states[n-1][0];if(r.fail!==null)runLam=Math.min(runLam,r.fail);
+  const ml=Math.min(VIEWL,runLam);marker.position.copy(toWorld(ml*q.u[0],ml*q.u[1],ml*q.u[2]));
+  if(now-runLast>120||runT>=1){runLast=now;PV[cur.id][cur.comp.k]=r.states[j][1];queueRebuild();
+    const inp=document.getElementById(`p-${cur.id}-${cur.comp.k}`);if(inp){inp.value=r.states[j][1];const o=document.getElementById(`p-${cur.id}-${cur.comp.k}-o`);if(o)o.textContent=(+r.states[j][1]).toFixed(3);}}
+  drawPath();drawPS();
+  if(runT>=1)endRun();}
+function updateEvoInfo(){const el=document.getElementById('evoInfo');el.textContent=cur.info?cur.info(PV[cur.id]):'';}
+function stopEvo(){ivAnim=false;const b=document.getElementById('bEvo');if(b)b.setAttribute('aria-pressed','false');}
+function renderEq(){
+  const el=document.getElementById('eq');
+  el.innerHTML=cur.tex.map((t,i)=>{let h;try{h=katex.renderToString(t,{output:'mathml',displayMode:true,throwOnError:false});}catch(e){h=`<code>${t}</code>`;}return `<div class="${i?'sub':''}">${h}</div>`;}).join('');
+  document.getElementById('usesChips').innerHTML=['I₁','J₂','J₃'].map((s,k)=>`<span class="chip${cur.uses[k]?' on':''}">${s}</span>`).join('');
+  document.getElementById('note').textContent=cur.note;renderRef();
+  const pe=document.getElementById('params');pe.innerHTML='';
+  cur.params.forEach(p=>{const id=`p-${cur.id}-${p.k}`;const d=document.createElement('div');d.className='param';
+    d.innerHTML=`<label for="${id}"><span>${p.label}</span><output id="${id}-o"></output></label><input type="range" id="${id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${PV[cur.id][p.k]}">`;
+    pe.appendChild(d);const inp=d.querySelector('input'),o=d.querySelector('output');
+    const fmt=()=>{o.textContent=(+inp.value).toFixed(p.step<0.01?3:2);};fmt();
+    inp.addEventListener('input',()=>{PV[cur.id][p.k]=+inp.value;fmt();stopTour();if(runSave&&!running){runSave=null;runLam=null;marker.visible=false;document.getElementById('bReset').disabled=true;}queueRebuild();});});
+  if(!cur.params.length)pe.innerHTML='<p class="empty">No shape parameters: the reference strength σ₀ only scales the surface.</p>';}
+
+let rebuildQueued=false;
+function queueRebuild(){if(rebuildQueued)return;rebuildQueued=true;requestAnimationFrame(()=>{rebuildQueued=false;rebuild(false);});}
+let cut1=null,cut2=null,showCut=true;
+function Fs(m,P,a,b){return m.F(inv([a,b,0]),P);}
+function planeCut(m,P){
+  let best=null,bf=Infinity;
+  for(let t=-4;t<=1.5;t+=0.05){const v=Fs(m,P,t,t);if(v<bf){bf=v;best=t;}}
+  if(!(bf<0))return null;
+  const c=best,RM=7,N=70,pts=[];
+  for(let k=0;k<NPS;k++){const be=2*PI*k/NPS,ca=Math.cos(be),sa=Math.sin(be);let lo=0,r=RM;
+    for(let i=1;i<=N;i++){const q=i/N,rr=RM*q*q;if(!(Fs(m,P,c+rr*ca,c+rr*sa)<0)){let A=lo,B=rr;for(let j=0;j<24;j++){const M=(A+B)/2;if(Fs(m,P,c+M*ca,c+M*sa)<0)A=M;else B=M;}r=(A+B)/2;break;}lo=rr;}
+    pts.push([c+r*ca,c+r*sa]);}
+  return pts;}
+function uniax(m,P,dir){if(!(Fs(m,P,0,0)<0))return null;let lo=0,hi=null;
+  for(let i=1;i<=80;i++){const q=i/80,s=8*q*q;if(!(Fs(m,P,dir*s,0)<0)){hi=s;break;}lo=s;}
+  if(hi===null)return null;for(let j=0;j<30;j++){const M=(lo+hi)/2;if(Fs(m,P,dir*M,0)<0)lo=M;else hi=M;}return (lo+hi)/2;}
+function setCutLine(L,pts){if(!pts){L.visible=false;return;}const a=L.geometry.attributes.position.array;
+  pts.forEach(([x,y],k)=>{const v=toWorld(x,y,0);a[k*3]=v.x;a[k*3+1]=v.y;a[k*3+2]=v.z;});
+  L.geometry.attributes.position.needsUpdate=true;L.computeLineDistances();L.visible=showCut;}
+function updateCuts(){
+  cut1=planeCut(cur,PV[cur.id]);setCutLine(cutL1,cut1);
+  cut2=ov?planeCut(ov,PV[ov.id]):null;setCutLine(cutL2,cut2);cutPlane.visible=showCut;
+  const st=uniax(cur,PV[cur.id],1),sc=uniax(cur,PV[cur.id],-1);
+  document.getElementById('rSt').textContent=st?st.toFixed(3):'–';
+  document.getElementById('rSc').textContent=sc?sc.toFixed(3):'–';
+  document.getElementById('rRat').textContent=st&&sc?(sc/st).toFixed(2):'–';
+  drawPS();}
+const psC=document.getElementById('ps');
+function drawPS(){
+  const d=fit(psC),g=psC.getContext('2d'),W=psC.width,H=psC.height;g.clearRect(0,0,W,H);
+  const fg=tok('--fg'),mu=tok('--muted'),gr=tok('--grid'),cc=catColor(),oc=tok('--ov');
+  let ext=1.2;[cut1,cut2].forEach(c=>c&&c.forEach(([x,y])=>{ext=Math.max(ext,Math.abs(x),Math.abs(y));}));ext=Math.min(7,ext*1.12);
+  const pad=22*d,sc=(Math.min(W,H)/2-pad)/ext,cx=W/2,cy=H/2,X=x=>cx+x*sc,Y=y=>cy-y*sc;
+  const stp=ext>4?2:ext>2?1:0.5;
+  g.lineWidth=1*d;g.strokeStyle=gr;
+  for(let v=-Math.floor(ext/stp)*stp;v<=ext;v+=stp){g.beginPath();g.moveTo(X(v),Y(-ext));g.lineTo(X(v),Y(ext));g.stroke();g.beginPath();g.moveTo(X(-ext),Y(v));g.lineTo(X(ext),Y(v));g.stroke();}
+  g.strokeStyle=mu;g.beginPath();g.moveTo(X(-ext),Y(0));g.lineTo(X(ext),Y(0));g.moveTo(X(0),Y(-ext));g.lineTo(X(0),Y(ext));g.stroke();
+  g.setLineDash([3*d,3*d]);g.beginPath();g.moveTo(X(-ext),Y(-ext));g.lineTo(X(ext),Y(ext));g.stroke();g.setLineDash([]);
+  g.font=`${10*d}px "JetBrains Mono", monospace`;g.fillStyle=mu;
+  g.textAlign='right';g.textBaseline='bottom';g.fillText('σ₁',X(ext)-2*d,Y(0)-3*d);
+  g.textAlign='left';g.textBaseline='top';g.fillText('σ₂',X(0)+4*d,Y(ext)+2*d);
+  g.textAlign='center';g.textBaseline='top';
+  for(let v=-Math.floor(ext/stp)*stp;v<=ext;v+=stp){if(Math.abs(v)<1e-9)continue;g.fillText(+v.toFixed(1),X(v),Y(0)+3*d);}
+  g.textAlign='left';g.textBaseline='bottom';g.fillText('σ₁ = σ₂',X(ext*0.55)+4*d,Y(ext*0.55));
+  const draw=(pts,col,dash,fill)=>{if(!pts)return;g.beginPath();pts.forEach(([x,y],k)=>k?g.lineTo(X(x),Y(y)):g.moveTo(X(x),Y(y)));g.closePath();
+    if(fill){g.globalAlpha=fill;g.fillStyle=col;g.fill();g.globalAlpha=1;}g.strokeStyle=col;g.lineWidth=2.2*d;g.setLineDash(dash);g.stroke();g.setLineDash([]);};
+  draw(cut1,cc,[],0.18);draw(cut2,oc,[7*d,4*d],0.1);
+  if(cur.comp&&pathRes.length){PATHS.forEach((q,i)=>{if(!q.on||Math.abs(q.u[2])>1e-9)return;const r=pathRes[i],Lp=Math.max(0.05,pathEnd(r));
+    g.strokeStyle=q.col;g.lineWidth=(i===selPath?2.4:1.4)*d;g.beginPath();g.moveTo(X(0),Y(0));g.lineTo(X(Lp*q.u[0]),Y(Lp*q.u[1]));g.stroke();
+    g.fillStyle=q.col;g.beginPath();g.arc(X(Lp*q.u[0]),Y(Lp*q.u[1]),(r.fail!==null?4:3)*d,0,2*PI);g.fill();});
+    if(runLam!==null&&Math.abs(PATHS[selPath].u[2])<1e-9){const q=PATHS[selPath];g.fillStyle=fg;g.beginPath();g.arc(X(runLam*q.u[0]),Y(runLam*q.u[1]),4.5*d,0,2*PI);g.fill();}}
+  if(!cut1){g.fillStyle=mu;g.textAlign='center';g.textBaseline='middle';g.fillText('no closed section in σ₃ = 0 for these parameters',cx,cy-20*d);}}
+
+function rebuild(animate){
+  const r=buildPositions(cur,PV[cur.id]);D=r.D;
+  fromPos=posAttr.array.slice();targetPos=r.pos;
+  if(animate&&MORPH>0){morphT=0;morphStart=performance.now();}else{morphT=1;posAttr.array.set(targetPos);posAttr.needsUpdate=true;surfGeo.computeVertexNormals();}
+  computeMeridians();updateCuts();updateEvoInfo();updateWarn();if(!running&&!runSave)computePaths();
+  if(D&&(xiS<D.lo||xiS>D.hi))xiS=D.lo+(D.hi-D.lo)*0.5;
+  updateSection();}
+
+function sweepDom(){if(!D)return null;if(!ov||!D2)return D;
+  const lo=Math.min(D.lo,D2.lo),hi=Math.max(D.hi,D2.hi);
+  return {lo,hi,loC:lo===D.lo?D.loC:D2.loC,hiC:hi===D.hi?D.hiC:D2.hiC};}
+function rebuildOverlay(){
+  merT2=[];merC2b=[];D2=null;
+  const on=!!ov;surf2.visible=wire2.visible=on;
+  if(on){const r=buildPositions(ov,PV[ov.id]);D2=r.D;posAttr2.array.set(r.pos);posAttr2.needsUpdate=true;surfGeo2.computeVertexNormals();
+    if(D2){const P=PV[ov.id],N=160;for(let i=0;i<=N;i++){const x=D2.lo+(D2.hi-D2.lo)*i/N,end=(i===0&&D2.loC)||(i===N&&D2.hiC);
+      merT2.push([x,end?0:rhoAt(ov,P,x,0)]);merC2b.push([x,end?0:rhoAt(ov,P,x,PI/3)]);}}}
+  syncCompareUI();updateCuts();updateSection();}
+function setOverlay(id){ov=id?MODELS.find(m=>m.id===id):null;if(ov&&ov.id===cur.id)ov=null;rebuildOverlay();}
+
+function select(id,animate){
+  if(ov&&ov.id===id)ov=null;
+  cur=MODELS.find(m=>m.id===id);
+  Object.entries(btns).forEach(([k,b])=>b.setAttribute('aria-pressed',k===id?'true':'false'));
+  const col=`var(${CATS[cur.cat].col})`;document.documentElement.style.setProperty('--cur',col);
+  document.getElementById('ovName').textContent=cur.name;
+  document.getElementById('ovCat').textContent=CATS[cur.cat].name+' · '+CATS[cur.cat].sub;
+  if(runSave){endRun();runSave=null;runLam=null;marker.visible=false;document.getElementById('bReset').disabled=true;}
+  renderEq();renderEvo();applyTheme();rebuild(animate);if(!ov){surf2.visible=wire2.visible=false;}
+  syncCompareUI();
+  try{localStorage.setItem('ysa-model',id);}catch(e){}}
+
+/* ---------- 2D views ---------- */
+const piC=document.getElementById('pi'),merC2=document.getElementById('mer');
+function fit(c){const r=c.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);const w=Math.max(1,Math.round(r.width*d)),h=Math.max(1,Math.round(r.height*d));if(c.width!==w||c.height!==h){c.width=w;c.height=h;}return d;}
+
+function updateSection(){
+  const P=PV[cur.id];const pos=ringGeo.attributes.position.array;
+  const inside=D&&xiS>=D.lo&&xiS<=D.hi;
+  secC1=ctrOf(cur,P,xiS)||[0,0];
+  for(let k=0;k<NR;k++){const om=2*PI*k/NR,r=inside?rhoAt(cur,P,xiS,om):0;section[k]=r;
+    pos[k*3]=secC1[0]+r*Math.cos(om);pos[k*3+1]=xiS;pos[k*3+2]=-(secC1[1]+r*Math.sin(om));}
+  ringGeo.attributes.position.needsUpdate=true;ring.visible=inside;disk.position.y=xiS;
+  in2=!!(ov&&D2&&xiS>=D2.lo&&xiS<=D2.hi);
+  {const p2=ringGeo2.attributes.position.array,P2=ov?PV[ov.id]:null;
+   secC2=(ov&&ctrOf(ov,P2,xiS))||[0,0];
+   for(let k=0;k<NR;k++){const om=2*PI*k/NR,r=in2?rhoAt(ov,P2,xiS,om):0;section2[k]=r;p2[k*3]=secC2[0]+r*Math.cos(om);p2[k*3+1]=xiS;p2[k*3+2]=-(secC2[1]+r*Math.sin(om));}
+   ringGeo2.attributes.position.needsUpdate=true;ring2.visible=in2;}
+  const rt=section[0],rc=section[NR/6];
+  document.getElementById('rXi').textContent=xiS.toFixed(2);
+  document.getElementById('rI1').textContent=(xiS*S3).toFixed(2);
+  document.getElementById('rK').textContent=inside&&rc>1e-6?(rt/rc).toFixed(3):'–';
+  const xs=document.getElementById('xi');if(document.activeElement!==xs)xs.value=xiS;
+  document.getElementById('xiOut').textContent=xiS.toFixed(2);
+  drawPi();drawMer();}
+
+function computeMeridians(){
+  merT=[];merC=[];if(!D)return;const P=PV[cur.id],N=160;
+  for(let i=0;i<=N;i++){const x=D.lo+(D.hi-D.lo)*i/N,end=(i===0&&D.loC)||(i===N&&D.hiC);
+    merT.push([x,end?0:rhoAt(cur,P,x,0)]);merC.push([x,end?0:rhoAt(cur,P,x,PI/3)]);}}
+
+function drawPi(){
+  const d=fit(piC),g=piC.getContext('2d'),W=piC.width,H=piC.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-26*d,sc=R/3.4;
+  g.clearRect(0,0,W,H);
+  const fg=tok('--fg'),mu=tok('--muted'),gr=tok('--grid'),cc=catColor();
+  g.lineWidth=1*d;g.strokeStyle=gr;
+  for(let r=0.5;r<=3.4;r+=0.5){g.beginPath();g.arc(cx,cy,r*sc,0,2*PI);g.stroke();}
+  g.font=`${11*d}px "JetBrains Mono", monospace`;g.textAlign='center';g.textBaseline='middle';
+  for(let k=0;k<6;k++){const a=-PI/2-k*PI/3;
+    g.strokeStyle=k%2?gr:mu;g.setLineDash(k%2?[3*d,3*d]:[]);g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);g.stroke();
+    g.setLineDash([]);g.fillStyle=k%2?mu:fg;
+    const lbl=k%2?['','−σ₃','','−σ₁','','−σ₂'][k]:['σ₁','','σ₂','','σ₃',''][k];
+    g.fillText(lbl,cx+Math.cos(a)*(R+14*d),cy+Math.sin(a)*(R+14*d));}
+  const map=(om,r,C)=>{if(C){const X=C[0]+r*Math.cos(om),Yy=C[1]+r*Math.sin(om);om=Math.atan2(Yy,X);r=Math.hypot(X,Yy);}const a=-PI/2-om;return [cx+Math.cos(a)*r*sc,cy+Math.sin(a)*r*sc];};
+  if(ring.visible){
+    const rc=section[NR/6];
+    g.strokeStyle=mu;g.setLineDash([4*d,4*d]);{const o=map(0,0,secC1);g.beginPath();g.arc(o[0],o[1],rc*sc,0,2*PI);g.stroke();}g.setLineDash([]);
+    g.beginPath();for(let k=0;k<NR;k++){const p=map(2*PI*k/NR,section[k],secC1);k?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]);}g.closePath();
+    g.globalAlpha=0.22;g.fillStyle=cc;g.fill();g.globalAlpha=1;g.strokeStyle=cc;g.lineWidth=2.2*d;g.stroke();
+    g.fillStyle=cc;[[0,'T'],[PI/3,'C']].forEach(([om,t])=>{const r=section[Math.round(om/(2*PI)*NR)%NR],p=map(om,r,secC1);g.beginPath();g.arc(p[0],p[1],3*d,0,2*PI);g.fill();
+      const q=map(om,r+0.32,secC1);g.fillText(t,q[0],q[1]);});
+  }else if(!in2){g.fillStyle=mu;g.fillText('slice is outside the elastic domain',cx,cy);}
+  if(in2){const oc=tok('--ov');g.beginPath();for(let k=0;k<NR;k++){const p=map(2*PI*k/NR,section2[k],secC2);k?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]);}g.closePath();
+    g.globalAlpha=0.12;g.fillStyle=oc;g.fill();g.globalAlpha=1;g.strokeStyle=oc;g.lineWidth=2.2*d;g.setLineDash([7*d,4*d]);g.stroke();g.setLineDash([]);}
+  }
+
+function drawMer(){
+  const d=fit(merC2),g=merC2.getContext('2d'),W=merC2.width,H=merC2.height;g.clearRect(0,0,W,H);
+  const fg=tok('--fg'),mu=tok('--muted'),gr=tok('--grid'),cc=catColor();
+  const pad=10*d,X=x=>pad+(x+4.8)/9.6*(W-2*pad),Y=r=>H/2-r/4*(H/2-pad);
+  g.lineWidth=1*d;g.strokeStyle=gr;
+  for(let x=-4;x<=4;x+=1){g.beginPath();g.moveTo(X(x),pad);g.lineTo(X(x),H-pad);g.stroke();}
+  for(let r=-3;r<=3;r+=1){g.beginPath();g.moveTo(pad,Y(r));g.lineTo(W-pad,Y(r));g.stroke();}
+  g.strokeStyle=mu;g.beginPath();g.moveTo(pad,Y(0));g.lineTo(W-pad,Y(0));g.stroke();
+  g.beginPath();g.moveTo(X(0),pad);g.lineTo(X(0),H-pad);g.stroke();
+  g.font=`${10*d}px "JetBrains Mono", monospace`;g.fillStyle=mu;g.textBaseline='top';
+  g.textAlign='left';g.fillText('ρ (tensile)',X(-4.7),pad+2*d);
+  g.textBaseline='bottom';g.fillText('ρ (compressive)',X(-4.7),H-pad-2*d);
+  g.textAlign='right';g.fillText('ξ →',W-pad-2*d,Y(0)-3*d);
+  g.textBaseline='top';[-4,-2,2,4].forEach(x=>{g.textAlign='center';g.fillText(x,X(x),Y(0)+3*d);});
+  if(merT.length){
+    const path=(arr,s)=>{g.beginPath();arr.forEach(([x,r],i)=>{const px=X(x),py=Y(s*Math.min(r,3.95));i?g.lineTo(px,py):g.moveTo(px,py);});};
+    g.globalAlpha=0.16;g.fillStyle=cc;
+    g.beginPath();merT.forEach(([x,r],i)=>{const px=X(x),py=Y(Math.min(r,3.95));i?g.lineTo(px,py):g.moveTo(px,py);});
+    for(let i=merC.length-1;i>=0;i--){const [x,r]=merC[i];g.lineTo(X(x),Y(-Math.min(r,3.95)));}g.closePath();g.fill();g.globalAlpha=1;
+    g.strokeStyle=cc;g.lineWidth=2*d;path(merT,1);g.stroke();path(merC,-1);g.stroke();}
+  if(merT2.length){const oc=tok('--ov');g.strokeStyle=oc;g.lineWidth=2*d;g.setLineDash([7*d,4*d]);
+    [[merT2,1],[merC2b,-1]].forEach(([arr,sg])=>{g.beginPath();arr.forEach(([x,r],i)=>{const px=X(x),py=Y(sg*Math.min(r,3.95));i?g.lineTo(px,py):g.moveTo(px,py);});g.stroke();});g.setLineDash([]);}
+  g.strokeStyle=fg;g.lineWidth=1.2*d;g.setLineDash([3*d,3*d]);g.beginPath();g.moveTo(X(xiS),pad);g.lineTo(X(xiS),H-pad);g.stroke();g.setLineDash([]);}
+
+/* ---------- controls ---------- */
+const bTour=document.getElementById('bTour'),bRot=document.getElementById('bRot'),bSweep=document.getElementById('bSweep');
+function setP(b,v){b.setAttribute('aria-pressed',v?'true':'false');}
+setP(bRot,!reduce);setP(bSweep,sweep);
+document.getElementById('bEvo').addEventListener('click',()=>{if(!cur.iv)return;ivAnim=!ivAnim;document.getElementById('bEvo').setAttribute('aria-pressed',ivAnim?'true':'false');
+  if(ivAnim){stopTour();const q=cur.params.find(z=>z.k===cur.iv);const v=PV[cur.id][cur.iv];ivPh=Math.acos(Math.max(-1,Math.min(1,1-2*(v-q.min)/(q.max-q.min))));}});
+function stopTour(){tour=false;setP(bTour,false);bTour.textContent='▶ Tour all';}
+bTour.addEventListener('click',()=>{tour=!tour;setP(bTour,tour);bTour.textContent=tour?'❚❚ Pause tour':'▶ Tour all';tourLast=performance.now();});
+bRot.addEventListener('click',()=>{if(!controls)return;controls.autoRotate=!controls.autoRotate;setP(bRot,controls.autoRotate);});
+const bCut=document.getElementById('bCut');
+bCut.addEventListener('click',()=>{showCut=!showCut;setP(bCut,showCut);cutPlane.visible=showCut;cutL1.visible=showCut&&!!cut1;cutL2.visible=showCut&&!!cut2;});
+bSweep.addEventListener('click',()=>{sweep=!sweep;setP(bSweep,sweep);const S=sweepDom();if(sweep&&S)sweepPhase=Math.acos(Math.max(-1,Math.min(1,1-2*(xiS-S.lo)/(S.hi-S.lo))));});
+document.getElementById('xi').addEventListener('input',e=>{sweep=false;setP(bSweep,false);xiS=+e.target.value;updateSection();});
+
+/* theme changes */
+const onTheme=()=>{applyTheme();drawPi();drawMer();drawPS();drawPath();marker.material.color=new THREE.Color(tok('--fg'));};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',onTheme);
+new MutationObserver(onTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{applyTheme();drawPi();drawMer();drawPS();});
+
+function resize(){if(!renderer)return;const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);renderer.domElement.style.width=w+'px';renderer.domElement.style.height=h+'px';camera.aspect=w/h;camera.updateProjectionMatrix();}
+{const ro=new ResizeObserver(()=>{resize();drawPi();drawMer();drawPS();drawPath();});ro.observe(document.body);ro.observe(document.getElementById('plots'));ro.observe(host);}
+
+/* ---------- compare UI ---------- */
+const ovSel=document.getElementById('ovSel'),bSwap=document.getElementById('bSwap');
+ovSel.innerHTML='<option value="">No overlay</option>'+CATS.map((c,ci)=>`<optgroup label="${c.name}">`+MODELS.filter(m=>m.cat===ci).map(m=>`<option value="${m.id}">${m.name}</option>`).join('')+'</optgroup>').join('');
+function syncCompareUI(){
+  [...ovSel.options].forEach(o=>{o.disabled=!!o.value&&o.value===cur.id;});
+  ovSel.value=ov?ov.id:'';bSwap.disabled=!ov;
+  const vs=document.getElementById('ovVs');vs.hidden=!ov;vs.textContent=ov?'vs. '+ov.name:'';
+  document.getElementById('ovInfo').hidden=!ov;
+  if(ov){document.getElementById('kA').textContent=cur.name;document.getElementById('kB').textContent=ov.name;
+    document.getElementById('eq2').innerHTML=ov.tex.map((t,i)=>{let h;try{h=katex.renderToString(t,{output:'mathml',displayMode:true,throwOnError:false});}catch(e){h=`<code>${t}</code>`;}return `<div class="${i?'sub':''}">${h}</div>`;}).join('');}}
+ovSel.addEventListener('change',()=>{stopTour();setOverlay(ovSel.value);});
+bSwap.addEventListener('click',()=>{if(!ov)return;const a=cur.id,b=ov.id;ov=MODELS.find(m=>m.id===a);select(b,true);rebuildOverlay();});
+const PRESETS=[
+ {label:'Tresca inside von Mises',a:'mises',b:'tresca'},
+ {label:'Mohr–Coulomb vs matched Drucker–Prager',a:'mc',b:'dp',set:()=>{Object.assign(PV.mc,{phi:30,c:0.5});Object.assign(PV.dp,{a:0.2309,k:0.6});}},
+ {label:'Mohr–Coulomb vs Matsuoka–Nakai',a:'mc',b:'mn',set:()=>{Object.assign(PV.mc,{phi:30,c:0.5});Object.assign(PV.mn,{phi:30,a:0.866});}},
+ {label:'Matsuoka–Nakai vs Lade–Duncan',a:'mn',b:'ld',set:()=>{Object.assign(PV.mn,{phi:30,a:0.866});Object.assign(PV.ld,{phi:30,a:0.866});}},
+ {label:'Gurson vs von Mises',a:'gurson',b:'mises'},
+ {label:'Willam–Warnke vs Ottosen',a:'ww',b:'ottosen'},
+ {label:'Hosford vs Tresca',a:'hosford',b:'tresca'},
+ {label:'Cazacu–Barlat vs von Mises',a:'cb',b:'mises'},
+ {label:'Bai–Wierzbicki vs von Mises',a:'bw',b:'mises'},
+ {label:'DP Cap vs Drucker–Prager',a:'dpc',b:'dp',set:()=>{Object.assign(PV.dp,{a:0.1617,k:0.2021});}},
+ {label:'Modified Cam-Clay vs SANISAND',a:'mcc',b:'sanisand'},
+ {label:'DiMaggio–Sandler vs DP Cap',a:'ds',b:'dpc'},
+ {label:'Kuhn–Downey vs Gurson',a:'kd',b:'gurson'}
+];
+const pre=document.getElementById('presets');
+PRESETS.forEach(p=>{const b=document.createElement('button');b.type='button';b.textContent=p.label;
+  b.addEventListener('click',()=>{stopTour();p.set&&p.set();ov=MODELS.find(m=>m.id===p.b);select(p.a,true);rebuildOverlay();});pre.appendChild(b);});
+
+/* ---------- loop ---------- */
+let last=performance.now(),secAcc=0;
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(morphT<1){morphT=Math.min(1,(now-morphStart)/MORPH);const e=morphT<.5?4*morphT**3:1-Math.pow(-2*morphT+2,3)/2;
+    const a=posAttr.array;for(let i=0;i<a.length;i++)a[i]=fromPos[i]+(targetPos[i]-fromPos[i])*e;posAttr.needsUpdate=true;surfGeo.computeVertexNormals();}
+  const SD=sweepDom();if(sweep&&SD){sweepPhase+=dt*0.55;const lo=SD.lo+(SD.loC?0.03:0),hi=SD.hi-(SD.hiC?0.03:0);
+    xiS=lo+(hi-lo)*(1-Math.cos(sweepPhase))/2;secAcc+=dt;if(secAcc>1/30){secAcc=0;updateSection();}}
+  if(running)stepRun(dt,now);
+  if(ivAnim&&cur.iv){ivPh+=dt*0.7;if(now-ivLast>110){ivLast=now;const q=cur.params.find(z=>z.k===cur.iv);
+      const v=q.min+(q.max-q.min)*(1-Math.cos(ivPh))/2;PV[cur.id][cur.iv]=v;
+      const inp=document.getElementById(`p-${cur.id}-${q.k}`);if(inp){inp.value=v;inp.dispatchEvent(new Event('input'));}}}
+  if(tour&&now-tourLast>7000){tourLast=now;const i=MODELS.indexOf(cur);select(MODELS[(i+1)%MODELS.length].id,true);}
+  if(controls)controls.update();
+  if(renderer)renderer.render(scene,camera);
+  requestAnimationFrame(frame);}
+
+let start='mc';try{const s=localStorage.getItem('ysa-model');if(s&&MODELS.some(m=>m.id===s))start=s;}catch(e){}
+renderPathChips();resize();select(start,false);marker.material.color=new THREE.Color(tok('--fg'));
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
