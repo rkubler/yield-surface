@@ -38,19 +38,6 @@ Developed with the assistance of Claude Opus 5.5 (Anthropic), October 2026
 | `CHANGELOG.md` | Version history |
 | `CITATION.cff` | Citation metadata (GitHub shows a "Cite this repository" button) |
 
-## Publish on GitHub Pages
-
-1. Create a repository and upload the contents of this folder at its root (or inside a `docs/` folder).
-2. In the repository, open **Settings → Pages**. Under **Build and deployment**, choose **Deploy from a branch**, then pick the branch (`main`) and the folder (`/root` or `/docs`).
-3. After a minute the page is live at `https://<user>.github.io/<repo>/`.
-
-No build step is needed. The page loads three.js r128, its OrbitControls and KaTeX 0.16.9 from public CDNs, and the Archivo and JetBrains Mono fonts from Google Fonts.
-
-To embed it in another page:
-
-```html
-<iframe src="https://<user>.github.io/<repo>/" width="100%" height="900" style="border:0"></iframe>
-```
 
 ## Browser requirements
 
@@ -59,3 +46,5 @@ The 3D view needs WebGL. If a browser shows a WebGL message, check that hardware
 ## Conventions
 
 Tension is positive. ξ = I₁/√3 and ρ = √(2J₂) are the Haigh–Westergaard coordinates; the Lode angle θ is −30° on the tensile meridian and +30° on the compressive one. Stresses are normalized by a reference strength. Surfaces are computed in the browser by solving each criterion along rays in Haigh–Westergaard space. The loading paths use associated flow and neglect elastic strains.
+
+https://doi.org/10.5281/zenodo.23319332 
