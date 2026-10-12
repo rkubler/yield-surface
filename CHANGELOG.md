@@ -4,6 +4,7 @@
 
 - New models: Cazacu–Barlat (2004) tension–compression asymmetry for HCP metals, and Bai–Wierzbicki (2008) pressure- and Lode-dependent metal plasticity for ductile fracture.
 - Convexity warning for Cazacu–Barlat (|c| > 3√3/4) and Bai–Wierzbicki (Lode factors), shown under the description.
+- GoatCounter visit statistics (rkubler.goatcounter.com), with an optional visit count after the credits.
 - Introduction, author and version shown next to the title.
 - Original paper reference under each model description.
 - Dilatant loading paths: the compacity can now fall (loosening, void growth) for all cap, porous and granular models.
