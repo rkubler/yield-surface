@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tresca Polynomial Geometry</title>
+<meta name="author" content="Régis Kubler">
+<meta name="description" content="Tresca criterion as a polynomial in J2 and J3 (Lubliner, 1990): six planes, two triangular prisms and the Tresca hexagonal prism.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#eef1f4; --panel:#fbfcfd; --fg:#15202b; --muted:#5b6876; --line:#d3dbe2; --grid:#e4e9ee;
+  --pa:#2b67a6; --pb:#a8661c; --tr:#b8322a; --vm:#7d8893; --neg:#b8322a; --nega:.13;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1217; --panel:#141b22; --fg:#e2e8ee; --muted:#93a0ad; --line:#27323d; --grid:#1d262f;
+  --pa:#72a9e3; --pb:#e3a65a; --tr:#ff7b6e; --vm:#8995a1; --neg:#ff7b6e; --nega:.22; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1217; --panel:#141b22; --fg:#e2e8ee; --muted:#93a0ad; --line:#27323d; --grid:#1d262f;
+  --pa:#72a9e3; --pb:#e3a65a; --tr:#ff7b6e; --vm:#8995a1; --neg:#ff7b6e; --nega:.22; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+body{font-family:var(--display);font-size:14px;line-height:1.5}
+.wrap{max-width:1500px;margin:0 auto;padding-block:20px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:6px}
+h1{font-stretch:78%;font-weight:800;font-size:clamp(26px,3.4vw,40px);letter-spacing:-.01em;margin:0;line-height:1.05;text-wrap:balance}
+.lead{margin:0;max-width:none;font-size:15px;text-wrap:pretty}
+.credit{margin:0;font-size:12px;color:var(--muted)}
+.credit a{color:inherit}
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+@media (min-width:1000px){.grid{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.stage{position:relative;overflow:hidden}
+#three{width:100%;height:clamp(380px,70vh,760px);touch-action:none}
+#three canvas{display:block}
+.toolbar{position:absolute;top:12px;left:12px;right:12px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none}
+.tb{pointer-events:auto;appearance:none;font:600 12px var(--display);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 11px 5px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tb i{width:10px;height:10px;border-radius:2px;background:var(--sw,var(--muted));display:inline-block;opacity:.35}
+.tb[aria-pressed="true"]{border-color:var(--sw,var(--fg))}
+.tb[aria-pressed="true"] i{opacity:1}
+.tb:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.lbl{position:absolute;font:600 13px var(--mono);color:var(--fg);pointer-events:none;transform:translate(-50%,-50%);text-shadow:0 0 4px var(--panel),0 0 4px var(--panel)}
+.lbl.h{color:var(--muted);font-weight:400}
+.hint{position:absolute;right:14px;bottom:10px;font-size:11px;color:var(--muted);pointer-events:none}
+.fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--muted)}
+.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.views{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+@media (min-width:640px) and (max-width:999px){.views{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{padding:12px 14px 12px}
+.tile h2{font-stretch:85%;font-weight:700;font-size:16px;margin:0}
+.tile .sub{font-size:12px;color:var(--muted);margin:2px 0 8px}
+.cv{width:100%;aspect-ratio:1/1;display:block;touch-action:none;cursor:crosshair}
+@media (min-width:1000px){.cv{max-width:400px;margin:0 auto}.stage{min-height:640px}#three{position:absolute;inset:0;height:auto}}
+.read{font:12px/1.55 var(--mono);color:var(--muted);margin:6px 0 0;min-height:3.1em;white-space:pre-wrap}
+.read b{color:var(--fg);font-weight:600}
+.read .neg{color:var(--neg)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin:0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:16px;height:3px;border-radius:2px;display:inline-block;background:var(--c)}
+.legend i.f{height:10px;opacity:.5}
+.cards{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+@media (min-width:900px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.card{padding:16px 18px}
+.card h2{font-stretch:85%;font-weight:700;font-size:18px;margin:0 0 8px}
+.card p,.card li{text-wrap:pretty}
+.card p{margin:0 0 10px}
+.card ol,.card ul{margin:0 0 10px;padding-left:20px}
+.eq{margin:6px 0 12px;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.eq .katex{font-size:1.08em}
+.eqlab{font-size:11px;letter-spacing:.06em;color:var(--muted);font-weight:600;margin:10px 0 0}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);vertical-align:-1px;margin-right:3px}
+.katex-mathml{display:inline}
+.crumb{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--muted)}
+.crumb a{color:var(--pa);font-weight:600;text-decoration:none}
+.crumb a:hover{text-decoration:underline}
+.card.wide{grid-column:1/-1}
+.refs{font-size:13px;margin:0 0 6px}
+.refs a{color:var(--pa)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header>
+  <nav class="crumb" aria-label="Breadcrumb"><a id="atlasLink" href="./">← Yield Surface Atlas</a><span>/</span><span>Pressure-insensitive criteria</span><span>/</span><span>Tresca</span></nav>
+  <h1>Tresca criterion: the polynomial form</h1>
+  <p class="lead">Tresca's criterion is usually written with the maximum shear stress, which has corners. Lubliner (1990) gives it as one smooth polynomial in J₂ and J₃. That polynomial does not describe only the hexagonal prism: its zero set is six full planes, which bound two triangular prisms rotated by 60°. The Tresca prism is the part they share.</p>
+  <p class="credit">Dr Régis Kubler, Arts et Métiers Institute of Technology · Developed with the assistance of Claude Opus 5.5 (Anthropic), October 2026 · Version 1.6 (11 October 2026) · Tension positive, σ₀ = 1 in the plots</p>
+</header>
+
+<div class="grid">
+  <section class="panel stage" aria-label="3D view of the six planes">
+    <div id="three"></div>
+    <div class="toolbar" id="tbar"></div>
+    <div id="labels"></div>
+    <div class="hint">Drag to rotate · scroll or pinch to zoom</div>
+    <div class="fallback" id="fb">The 3D view needs WebGL, which this browser does not provide. The two sections on the side and the formulas below still work.</div>
+  </section>
+
+  <div class="side">
+    <div class="views">
+      <section class="panel tile">
+        <h2>π-plane: the hexagram</h2>
+        <p class="sub">Deviatoric plane, looking down the hydrostatic axis. Shaded where F &lt; 0.</p>
+        <canvas class="cv" id="piC" aria-label="Pi-plane section"></canvas>
+        <p class="read" id="piR">Move over the plot to read F.</p>
+      </section>
+      <section class="panel tile">
+        <h2>Plane stress σ₃ = 0</h2>
+        <p class="sub">The same six planes cut by σ₃ = 0 give six straight lines.</p>
+        <canvas class="cv" id="psC" aria-label="Plane stress section"></canvas>
+        <p class="read" id="psR">Move over the plot to read F.</p>
+      </section>
+    </div>
+    <p class="legend">
+      <span><i style="--c:var(--pa)"></i>Prism A: σᵢ − σⱼ = +σ₀</span>
+      <span><i style="--c:var(--pb)"></i>Prism B: σᵢ − σⱼ = −σ₀</span>
+      <span><i style="--c:var(--tr)"></i>Tresca = A ∩ B</span>
+      <span><i class="f" style="--c:var(--neg)"></i>F &lt; 0</span>
+      <span><i style="--c:var(--vm)"></i>von Mises (dashed)</span>
+    </p>
+  </div>
+</div>
+
+<div class="cards">
+  <section class="panel card">
+    <h2>Formulations</h2>
+    <p class="eqlab">CLASSICAL FORM · IN PRINCIPAL STRESSES</p>
+    <div class="eq" data-tex="f=\max\left(|\sigma_1-\sigma_2|,|\sigma_2-\sigma_3|,|\sigma_3-\sigma_1|\right)-\sigma_0=0"></div>
+    <p class="eqlab">POLYNOMIAL FORM IN J₂ AND J₃ (LUBLINER, 1990)</p>
+    <div class="eq" data-tex="F = 4J_2^3 - 27J_3^2 - 9\sigma_0^2 J_2^2 + 6\sigma_0^4 J_2 - \sigma_0^6 = 0"></div>
+    <p>Lubliner writes it with the shear yield stress k = σ₀/2: 4J₂³ − 27J₃² − 36k²J₂² + 96k⁴J₂ − 64k⁶ = 0.</p>
+    <p class="eqlab">FACTORED IN PRINCIPAL STRESSES (EXACT IDENTITY)</p>
+    <div class="eq" data-tex="\begin{aligned}F = {}&amp;\left[(\sigma_1-\sigma_2)^2-\sigma_0^2\right]\left[(\sigma_2-\sigma_3)^2-\sigma_0^2\right]\\ &amp;\times\left[(\sigma_3-\sigma_1)^2-\sigma_0^2\right]\end{aligned}"></div>
+    <p class="eqlab">LODE-ANGLE FORM</p>
+    <div class="eq" data-tex="f=2\sqrt{J_2}\,\cos\theta-\sigma_0=0,\qquad |\theta|\le 30^\circ"></div>
+    <div class="eq" data-tex="F = 4J_2^3\cos^2 3\theta - \sigma_0^2\left(3J_2-\sigma_0^2\right)^2"></div>
+    <p class="eqlab">IN PLANE STRESS, σ₃ = 0</p>
+    <div class="eq" data-tex="F = \left(\sigma_1^2-\sigma_0^2\right)\left(\sigma_2^2-\sigma_0^2\right)\left[(\sigma_1-\sigma_2)^2-\sigma_0^2\right]"></div>
+    <p class="eqlab">KEEPING ONLY TRESCA</p>
+    <div class="eq" data-tex="F=0\ \text{and}\ 3J_2\le\sigma_0^2\quad\Longleftrightarrow\quad f=0"></div>
+    <p>Elastic domain: F &lt; 0 and 3J₂ &lt; σ₀², which is the same as max|σᵢ − σⱼ| &lt; σ₀.</p>
+  </section>
+
+  <section class="panel card">
+    <h2>Reading the picture</h2>
+    <ol>
+      <li>Each factor (σᵢ − σⱼ)² − σ₀² vanishes on two parallel planes, σᵢ − σⱼ = +σ₀ and σᵢ − σⱼ = −σ₀. Three factors give six planes, all parallel to the hydrostatic axis, so every section along that axis is the same.</li>
+      <li>The three “+σ₀” planes cannot meet at one point, because (σ₁ − σ₂) + (σ₂ − σ₃) + (σ₃ − σ₁) = 0 ≠ 3σ₀. They close into a triangular prism, <span class="sw" style="--c:var(--pa)"></span>A. The three “−σ₀” planes form the mirror prism <span class="sw" style="--c:var(--pb)"></span>B, rotated by 60°.</li>
+      <li>In the π-plane the two triangles draw a six-pointed star (a hexagram). The region inside both is where all three |σᵢ − σⱼ| ≤ σ₀, which is exactly the <span class="sw" style="--c:var(--tr)"></span>Tresca hexagon.</li>
+      <li>At the six corners two planes cross, so two factors vanish together. F has a double root there and its gradient is zero: the flow direction is not defined, as expected for Tresca. Along the equibiaxial path (σ, σ, 0), F = −σ₀²(σ² − σ₀²)², which touches zero at σ = σ₀ without changing sign.</li>
+      <li>F &lt; 0 inside the hexagon, but also in six half-strips that start at its corners and run outward. There one |σᵢ − σⱼ| is below σ₀ and the other two are above it, so one factor is negative and F is negative again. The sign of F alone therefore does not define the elastic domain.</li>
+      <li>The missing condition is 3J₂ ≤ σ₀², the inside of the <span class="sw" style="--c:var(--vm)"></span>von Mises cylinder through the six corners. The extra parts of the planes and the six negative half-strips all lie outside it, and between the hexagon and the circle F &gt; 0. A finite-element code using the polynomial can apply this check, or use the Lode-angle form directly.</li>
+    </ol>
+  </section>
+
+  <section class="panel card wide">
+    <h2>References</h2>
+    <p class="refs">H. Tresca (1864). Sur l'écoulement des corps solides soumis à de fortes pressions. <i>C. R. Acad. Sci. Paris 59, 754–758</i>.</p>
+    <p class="refs">J. Lubliner (1990). <i>Plasticity Theory</i>. Macmillan, New York; revised edition, Dover, Mineola NY, 2008. Source of the polynomial form in J₂ and J₃, written there with k = σ₀/2.</p>
+  </section>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+(function(){
+"use strict";
+const S0=1, SQ2=Math.SQRT2, SQ3=Math.sqrt(3), SQ6=Math.sqrt(6);
+// Basis: a = sigma1 direction in the pi-plane, b = perpendicular, e = hydrostatic
+const A=[2/SQ6,-1/SQ6,-1/SQ6], B=[0,1/SQ2,-1/SQ2], E=[1/SQ3,1/SQ3,1/SQ3];
+const dot=(p,q)=>p[0]*q[0]+p[1]*q[1]+p[2]*q[2];
+const PAIRS=[[0,1],[1,2],[2,0]];
+const NAMES=['σ₁ − σ₂','σ₂ − σ₃','σ₃ − σ₁'];
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+
+function Fval(s){let f=1;for(const[i,j]of PAIRS){const d=s[i]-s[j];f*=d*d-S0*S0}return f}
+function invariants(s){const m=(s[0]+s[1]+s[2])/3,d=s.map(x=>x-m);const J2=(d[0]*d[0]+d[1]*d[1]+d[2]*d[2])/2,J3=d[0]*d[1]*d[2];
+  let th=0;if(J2>1e-12){let x=-1.5*SQ3*J3/Math.pow(J2,1.5);x=Math.max(-1,Math.min(1,x));th=Math.asin(x)/3}return{J2,J3,th}}
+
+// A 2D view: sigma(p) linear in p = (x, y). L = 3x2 matrix of columns.
+function makeView(kind){
+  const v={kind};
+  if(kind==='pi'){v.ext=2.15;v.sig=(x,y)=>[x*A[0]+y*B[0],x*A[1]+y*B[1],x*A[2]+y*B[2]];v.col=[A,B]}
+  else{v.ext=2.6;v.sig=(x,y)=>[x,y,0];v.col=[[1,0,0],[0,1,0]]}
+  // lines g.p = c for sigma_i - sigma_j = c
+  v.lines=[];
+  for(let k=0;k<3;k++){const[i,j]=PAIRS[k];const g=[v.col[0][i]-v.col[0][j],v.col[1][i]-v.col[1][j]];
+    for(const c of[S0,-S0])v.lines.push({k,c,g,fam:c>0?'A':'B'})}
+  const inter=(l1,l2)=>{const det=l1.g[0]*l2.g[1]-l1.g[1]*l2.g[0];if(Math.abs(det)<1e-12)return null;
+    return[(l1.c*l2.g[1]-l2.c*l1.g[1])/det,(l1.g[0]*l2.c-l2.g[0]*l1.c)/det]};
+  const tri=fam=>{const ls=v.lines.filter(l=>l.fam===fam);return[inter(ls[0],ls[1]),inter(ls[1],ls[2]),inter(ls[2],ls[0])]};
+  v.triA=tri('A');v.triB=tri('B');
+  // hexagon: corners of Tresca, max|si-sj| = s0 vertices
+  const corners=[[1,0,0],[1,1,0],[0,1,0],[0,1,1],[0,0,1],[1,0,1]].map(s=>s.map(x=>x*S0));
+  if(kind==='pi')v.hex=corners.map(s=>[dot(s,A),dot(s,B)]);
+  else v.hex=[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]].map(p=>[p[0]*S0,p[1]*S0]);
+  return v}
+
+const VPI=makeView('pi'), VPS=makeView('ps');
+
+// ---------- 2D drawing ----------
+function setupCanvas(cv){const r=cv.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.width=Math.max(1,Math.round(r.width*dpr));cv.height=Math.max(1,Math.round(r.height*dpr));return{w:r.width,h:r.height,dpr}}
+function hexA(col,a){const c=document.createElement('canvas').getContext('2d');c.fillStyle=col;const s=c.fillStyle;
+  if(s[0]==='#'){const n=parseInt(s.slice(1),16);return`rgba(${n>>16&255},${n>>8&255},${n&255},${a})`}return s.replace(/rgba?\(([^)]+)\)/,(m,g)=>`rgba(${g.split(',').slice(0,3).join(',')},${a})`)}
+
+const probe={pi:null,ps:null};
+function draw2D(cv,v,which){
+  const{w,h,dpr}=setupCanvas(cv);const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  const pad=8,sz=Math.min(w,h)-2*pad,sc=sz/(2*v.ext),cx=w/2,cy=h/2;
+  const X=x=>cx+x*sc,Y=y=>cy-y*sc;v.map={cx,cy,sc};
+  const C={fg:css('--fg'),mu:css('--muted'),gr:css('--grid'),pa:css('--pa'),pb:css('--pb'),tr:css('--tr'),vm:css('--vm'),neg:css('--neg'),bg:css('--panel')};
+  ctx.clearRect(0,0,w,h);
+  // sign map of F
+  const step=3,negc=hexA(C.neg,parseFloat(css('--nega'))||.13);ctx.fillStyle=negc;
+  for(let py=0;py<h;py+=step)for(let px=0;px<w;px+=step){const x=(px+step/2-cx)/sc,y=(cy-py-step/2)/sc;
+    if(Fval(v.sig(x,y))<0)ctx.fillRect(px,py,step,step)}
+  // grid / axes
+  ctx.lineWidth=1;ctx.strokeStyle=C.gr;
+  if(v.kind==='ps'){for(let t=-2;t<=2;t++){ctx.beginPath();ctx.moveTo(X(t),0);ctx.lineTo(X(t),h);ctx.stroke();ctx.beginPath();ctx.moveTo(0,Y(t));ctx.lineTo(w,Y(t));ctx.stroke()}
+    ctx.strokeStyle=C.mu;ctx.beginPath();ctx.moveTo(0,Y(0));ctx.lineTo(w,Y(0));ctx.moveTo(X(0),0);ctx.lineTo(X(0),h);ctx.stroke();
+    ctx.fillStyle=C.mu;ctx.font='12px '+css('--mono');ctx.fillText('σ₁',w-22,Y(0)-6);ctx.fillText('σ₂',X(0)+6,14);
+    ctx.fillText('1',X(1)+3,Y(0)+13);ctx.fillText('−1',X(-1)+3,Y(0)+13)}
+  else{ctx.setLineDash([3,4]);ctx.strokeStyle=C.mu;ctx.fillStyle=C.mu;ctx.font='12px '+css('--mono');
+    for(let k=0;k<3;k++){const ang=k*2*Math.PI/3,r=v.ext*.97;ctx.beginPath();ctx.moveTo(X(0),Y(0));ctx.lineTo(X(r*Math.cos(ang)),Y(r*Math.sin(ang)));ctx.stroke();
+      const rl=v.ext*.86,lx=X(rl*Math.cos(ang)),ly=Y(rl*Math.sin(ang));ctx.fillText(['σ₁','σ₂','σ₃'][k],lx+(k===0?-18:6),ly+(k===0?-6:k===1?4:12))}
+    ctx.setLineDash([])}
+  // von Mises
+  ctx.setLineDash([5,4]);ctx.strokeStyle=C.vm;ctx.lineWidth=1.2;ctx.beginPath();
+  if(v.kind==='pi'){ctx.arc(X(0),Y(0),Math.sqrt(2/3)*S0*sc,0,2*Math.PI)}
+  else{for(let i=0;i<=120;i++){const t=i/120*2*Math.PI;// x^2-xy+y^2=1 : principal axes at 45deg
+      const u=Math.cos(t)*SQ2,vv=Math.sin(t)*Math.sqrt(2/3);const x=(u-vv)/SQ2,y=(u+vv)/SQ2;i?ctx.lineTo(X(x),Y(y)):ctx.moveTo(X(x),Y(y))}}
+  ctx.stroke();ctx.setLineDash([]);
+  // six full lines
+  const big=v.ext*3;
+  for(const l of v.lines){const[gx,gy]=l.g,n2=gx*gx+gy*gy,p0=[gx*l.c/n2,gy*l.c/n2],d=[-gy/Math.sqrt(n2),gx/Math.sqrt(n2)];
+    ctx.strokeStyle=hexA(l.fam==='A'?C.pa:C.pb,.75);ctx.lineWidth=1.2;ctx.beginPath();
+    ctx.moveTo(X(p0[0]-d[0]*big),Y(p0[1]-d[1]*big));ctx.lineTo(X(p0[0]+d[0]*big),Y(p0[1]+d[1]*big));ctx.stroke()}
+  // triangles
+  const poly=(pts,stroke,lw,fill)=>{ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1])));ctx.closePath();
+    if(fill){ctx.fillStyle=fill;ctx.fill()}ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.lineJoin='round';ctx.stroke()};
+  poly(v.triA,C.pa,2.4);poly(v.triB,C.pb,2.4);
+  poly(v.hex,C.tr,3,hexA(C.tr,.16));
+  // corner double roots
+  ctx.lineWidth=2;for(const p of v.hex){ctx.beginPath();ctx.arc(X(p[0]),Y(p[1]),4.5,0,2*Math.PI);ctx.fillStyle=C.bg;ctx.fill();ctx.strokeStyle=C.tr;ctx.stroke()}
+  // line labels in plane stress
+  if(v.kind==='ps'){ctx.font='11px '+css('--mono');
+    const lab=(t,x,y,c)=>{ctx.fillStyle=c;ctx.fillText(t,X(x),Y(y))};
+    lab('σ₂ = σ₀',-2.5,1.08,C.pa);lab('σ₂ = −σ₀',1.55,-0.92,C.pb);
+    lab('σ₁ = −σ₀',-0.98,-2.45,C.pa);lab('σ₁ = σ₀',1.06,2.42,C.pb);
+    lab('σ₁−σ₂ = σ₀',1.75,0.45,C.pa);lab('σ₁−σ₂ = −σ₀',-2.5,-1.75,C.pb)}
+  // probe
+  const pr=probe[which];if(pr){ctx.strokeStyle=C.fg;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(pr[0]),Y(pr[1]),6,0,2*Math.PI);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(X(pr[0])-10,Y(pr[1]));ctx.lineTo(X(pr[0])+10,Y(pr[1]));ctx.moveTo(X(pr[0]),Y(pr[1])-10);ctx.lineTo(X(pr[0]),Y(pr[1])+10);ctx.stroke()}
+}
+const fmt=x=>(x<0?'−':' ')+Math.abs(x).toFixed(2);
+function readout(el,v,p){
+  if(!p){el.textContent='Move over the plot to read F.';return}
+  const s=v.sig(p[0],p[1]);const fs=PAIRS.map(([i,j])=>{const d=s[i]-s[j];return d*d-S0*S0});const F=fs[0]*fs[1]*fs[2];
+  const{th}=invariants(s);const inside=fs.every(f=>f<=0);const nneg=fs.filter(f=>f<0).length;
+  const where=inside?'inside the Tresca hexagon':(F<0?'outside Tresca, yet F < 0 (half-strip beyond a corner)':(nneg===2?'in a star point: inside one triangle only':'outside both triangles'));
+  el.innerHTML=`σ = (<b>${fmt(s[0])}</b>, <b>${fmt(s[1])}</b>, <b>${fmt(s[2])}</b>)   θ = <b>${(th*180/Math.PI).toFixed(1)}°</b>\n`+
+    `factors ${fs.map(f=>`<span class="${f<0?'neg':''}">${fmt(f)}</span>`).join(' ·')}  →  F = <b class="${F<0?'neg':''}">${fmt(F)}</b>\n${where}`}
+function hookProbe(cv,v,which,el){
+  const mv=e=>{const r=cv.getBoundingClientRect(),m=v.map;if(!m)return;const x=(e.clientX-r.left-m.cx)/m.sc,y=(m.cy-(e.clientY-r.top))/m.sc;
+    if(Math.abs(x)>v.ext||Math.abs(y)>v.ext){probe[which]=null}else probe[which]=[x,y];draw2D(cv,v,which);readout(el,v,probe[which])};
+  cv.addEventListener('pointermove',mv);cv.addEventListener('pointerdown',mv);
+  cv.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'){probe[which]=null;draw2D(cv,v,which);readout(el,v,null)}})}
+const piC=document.getElementById('piC'),psC=document.getElementById('psC');
+hookProbe(piC,VPI,'pi',document.getElementById('piR'));hookProbe(psC,VPS,'ps',document.getElementById('psR'));
+function draw2DAll(){draw2D(piC,VPI,'pi');draw2D(psC,VPS,'ps')}
+
+// ---------- KaTeX ----------
+function renderTex(){if(!window.katex)return;document.querySelectorAll('[data-tex]').forEach(el=>{try{katex.render(el.dataset.tex,el,{displayMode:true,output:'mathml',throwOnError:false})}catch(e){el.textContent=el.dataset.tex}})}
+
+// ---------- 3D ----------
+const L=1.6;
+const to3=(u,v,xi)=>new THREE.Vector3(u,xi,-v);
+const sig3=s=>to3(dot(s,A),dot(s,B),dot(s,E));
+let three=null;
+function init3D(){
+  const host=document.getElementById('three');
+  if(!window.THREE){document.getElementById('fb').style.display='flex';return}
+  let renderer=null;
+  for(const o of[{antialias:true},{antialias:false},{antialias:false,powerPreference:'low-power',precision:'mediump'}]){try{renderer=new THREE.WebGLRenderer(Object.assign({alpha:true},o));if(renderer.getContext())break}catch(e){renderer=null}}
+  if(!renderer){document.getElementById('fb').style.display='flex';return}
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));host.appendChild(renderer.domElement);
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(32,1,.1,100);camera.position.set(6.2,5.4,7.6);
+  const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,0,0);controls.autoRotate=true;controls.autoRotateSpeed=.8;
+  controls.minDistance=3;controls.maxDistance=20;
+  scene.add(new THREE.AmbientLight(0xffffff,.65));const dl=new THREE.DirectionalLight(0xffffff,.55);dl.position.set(3,6,4);scene.add(dl);
+  const groups={};const mats=[];
+  const mkMat=(key,op,lit)=>{const m=lit?new THREE.MeshLambertMaterial({transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false}):new THREE.MeshBasicMaterial({transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false});m.userData.key=key;mats.push(m);return m};
+  const mkLine=(key,op)=>{const m=new THREE.LineBasicMaterial({transparent:op<1,opacity:op});m.userData.key=key;mats.push(m);return m};
+  const mkDash=(key,op)=>{const m=new THREE.LineDashedMaterial({transparent:true,opacity:op,dashSize:.08,gapSize:.07});m.userData.key=key;mats.push(m);return m};
+  function prism(pts,key,op,lit,lineOp){
+    const g=new THREE.Group();const pos=[];const n=pts.length;
+    for(let i=0;i<n;i++){const p=pts[i],q=pts[(i+1)%n];const a=to3(p[0],p[1],-L),b=to3(q[0],q[1],-L),c=to3(q[0],q[1],L),d=to3(p[0],p[1],L);
+      pos.push(a.x,a.y,a.z,b.x,b.y,b.z,c.x,c.y,c.z,a.x,a.y,a.z,c.x,c.y,c.z,d.x,d.y,d.z)}
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.computeVertexNormals();
+    g.add(new THREE.Mesh(geo,mkMat(key,op,lit)));
+    const lp=[];for(let i=0;i<n;i++){const p=pts[i],q=pts[(i+1)%n];for(const z of[-L,L]){const a=to3(p[0],p[1],z),b=to3(q[0],q[1],z);lp.push(a.x,a.y,a.z,b.x,b.y,b.z)}
+      const a=to3(p[0],p[1],-L),b=to3(p[0],p[1],L);lp.push(a.x,a.y,a.z,b.x,b.y,b.z)}
+    const lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.Float32BufferAttribute(lp,3));g.add(new THREE.LineSegments(lg,mkLine(key,lineOp)));
+    return g}
+  const loop=(pts,key,op,xi)=>{const v=pts.map(p=>to3(p[0],p[1],xi||0));v.push(v[0]);const g=new THREE.BufferGeometry().setFromPoints(v);return new THREE.Line(g,mkLine(key,op))};
+  // prisms
+  groups.A=prism(VPI.triA,'pa',.13,false,.95);
+  groups.B=prism(VPI.triB,'pb',.13,false,.95);
+  groups.T=prism(VPI.hex,'tr',.34,true,1);
+  // six full planes
+  groups.P=new THREE.Group();
+  for(const l of VPI.lines){const[gx,gy]=l.g,n2=gx*gx+gy*gy,p0=[gx*l.c/n2,gy*l.c/n2],d=[-gy/Math.sqrt(n2),gx/Math.sqrt(n2)],T=2.7;
+    const p1=[p0[0]-d[0]*T,p0[1]-d[1]*T],p2=[p0[0]+d[0]*T,p0[1]+d[1]*T];
+    groups.P.add(prism([p1,p2],l.fam==='A'?'pa':'pb',.045,false,.35))}
+  // hexagram in the pi-plane xi = 0
+  groups.H=new THREE.Group();
+  {const disc=new THREE.Mesh(new THREE.CircleGeometry(2.0,72),mkMat('mu',.07,false));disc.rotation.x=-Math.PI/2;groups.H.add(disc);
+   groups.H.add(loop(VPI.triA,'pa',1));groups.H.add(loop(VPI.triB,'pb',1));groups.H.add(loop(VPI.hex,'tr',1))}
+  // sigma3 = 0 plane with its Tresca cut
+  groups.S=new THREE.Group();
+  {const R=2.1,c=[[-R,-R],[R,-R],[R,R],[-R,R]].map(p=>sig3([p[0],p[1],0]));
+   const geo=new THREE.BufferGeometry().setFromPoints([c[0],c[1],c[2],c[0],c[2],c[3]]);groups.S.add(new THREE.Mesh(geo,mkMat('fg',.06,false)));
+   const ol=new THREE.BufferGeometry().setFromPoints([...c,c[0]]);groups.S.add(new THREE.Line(ol,mkLine('mu',.6)));
+   const hx=VPS.hex.map(p=>sig3([p[0],p[1],0]));hx.push(hx[0]);groups.S.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(hx),mkLine('fg',1)))}
+  // von Mises cylinder
+  groups.V=new THREE.Group();
+  {const cyl=new THREE.Mesh(new THREE.CylinderGeometry(Math.sqrt(2/3),Math.sqrt(2/3),2*L,72,1,true),mkMat('vm',.10,false));groups.V.add(cyl);
+   for(const z of[-L,L]){const pts=[];for(let i=0;i<=72;i++){const t=i/72*2*Math.PI;pts.push(to3(Math.sqrt(2/3)*Math.cos(t),Math.sqrt(2/3)*Math.sin(t),z))}
+     groups.V.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mkLine('vm',.6)))}}
+  // axes
+  const axes=new THREE.Group();const labels=[];
+  for(let k=0;k<3;k++){const s=[0,0,0];s[k]=2.5;const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),sig3(s)]);axes.add(new THREE.Line(g,mkLine('fg',.85)));
+    const s2=[0,0,0];s2[k]=2.75;labels.push({p:sig3(s2),t:['σ₁','σ₂','σ₃'][k]})}
+  {const g=new THREE.BufferGeometry().setFromPoints([to3(0,0,-L-.3),to3(0,0,L+.5)]);const ln=new THREE.Line(g,mkDash('mu',.9));ln.computeLineDistances();axes.add(ln);
+   labels.push({p:to3(0,0,L+.7),t:'ξ',h:1})}
+  scene.add(axes);
+  const order=['P','A','B','V','S','H','T'];for(const k of order)scene.add(groups[k]);
+  const labHost=document.getElementById('labels');labels.forEach(l=>{l.el=document.createElement('span');l.el.className='lbl'+(l.h?' h':'');l.el.textContent=l.t;labHost.appendChild(l.el)});
+  function colors(){const m={pa:css('--pa'),pb:css('--pb'),tr:css('--tr'),vm:css('--vm'),fg:css('--fg'),mu:css('--muted')};for(const mt of mats)mt.color.set(m[mt.userData.key])}
+  colors();
+  function resize(){const r=host.getBoundingClientRect();renderer.setSize(r.width,r.height,false);renderer.domElement.style.width=r.width+'px';renderer.domElement.style.height=r.height+'px';camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix()}
+  resize();
+  const tmp=new THREE.Vector3();
+  function frame(){controls.update();renderer.render(scene,camera);const r=host.getBoundingClientRect();
+    for(const l of labels){tmp.copy(l.p).project(camera);l.el.style.left=((tmp.x+1)/2*r.width)+'px';l.el.style.top=((1-tmp.y)/2*r.height)+'px';l.el.style.display=tmp.z<1?'':'none'}
+    requestAnimationFrame(frame)}
+  requestAnimationFrame(frame);
+  // stop autorotate on interaction
+  renderer.domElement.addEventListener('pointerdown',()=>{if(controls.autoRotate){controls.autoRotate=false;const b=document.querySelector('[data-k="R"]');if(b)b.setAttribute('aria-pressed','false')}});
+  three={groups,controls,colors,resize};
+}
+
+// toolbar
+const TOG=[['A','Prism A','--pa',true],['B','Prism B','--pb',true],['T','Tresca prism','--tr',true],['P','Six full planes','--pa',false],['H','π-plane star','--fg',true],['S','σ₃ = 0 plane','--muted',false],['V','von Mises','--vm',false],['R','Rotate','--fg',true]];
+function buildBar(){const bar=document.getElementById('tbar');
+  for(const[k,t,c,on]of TOG){const b=document.createElement('button');b.className='tb';b.dataset.k=k;b.style.setProperty('--sw',`var(${c})`);b.setAttribute('aria-pressed',on);b.innerHTML=`<i></i>${t}`;
+    b.onclick=()=>{const v=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',v);apply(k,v)};bar.appendChild(b);apply(k,on)}}
+function apply(k,v){if(!three)return;if(k==='R'){three.controls.autoRotate=v;return}three.groups[k].visible=v}
+
+init3D();buildBar();renderTex();draw2DAll();
+let rt=0;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{draw2DAll();if(three)three.resize()},80)});
+const redraw=()=>{draw2DAll();if(three)three.colors()};
+if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',redraw);
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw2DAll);
+})();
+</script>
+<!-- GoatCounter visit statistics: https://rkubler.goatcounter.com/ -->
+<script data-goatcounter="https://rkubler.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+Tresca polynomial in plane stress (sigma_3 = 0), GeoGebra Classic / Graphing
+=========================================================================
+Axes: x = sigma_1, y = sigma_2. Paste the lines below into the Input Bar,
+one line at a time (press Enter after each).
+
+s_0 = Slider(0.2, 2, 0.05)
+SetValue(s_0, 1)
+
+Tresca polynomial 4 J2^3 - 27 J3^2 - 9 s0^2 J2^2 + 6 s0^4 J2 - s0^6 = 0, written out in x and y
+with J2 = (x^2 - x y + y^2)/3 and J3 = -(2x - y)(2y - x)(x + y)/27:
+
+T: 4 ((x^2 - x y + y^2)/3)^3 - 27 ((2x - y) (2y - x) (x + y)/27)^2 - 9 s_0^2 ((x^2 - x y + y^2)/3)^2 + 6 s_0^4 (x^2 - x y + y^2)/3 - s_0^6 = 0
+SetColor(T, "Red")
+SetLineThickness(T, 6)
+
+The real Tresca criterion, max(|s1|, |s2|, |s1 - s2|) = s0, is the inner hexagon:
+
+H = Polygon((s_0, 0), (s_0, s_0), (0, s_0), (-s_0, 0), (-s_0, -s_0), (0, -s_0))
+SetColor(H, "Blue")
+
+von Mises for comparison (circumscribes Tresca, touching it at the six corners):
+
+M: x^2 - x y + y^2 = s_0^2
+SetColor(M, "Gray")
+
+Optional: where the polynomial is negative (the shading also covers regions outside the hexagon):
+
+N: 4 ((x^2 - x y + y^2)/3)^3 - 27 ((2x - y) (2y - x) (x + y)/27)^2 - 9 s_0^2 ((x^2 - x y + y^2)/3)^2 + 6 s_0^4 (x^2 - x y + y^2)/3 - s_0^6 < 0
+
+What you should see
+-------------------
+In plane stress the polynomial factors exactly (checked numerically) as
+  [(x - y)^2 - s0^2] (y^2 - s0^2) (x^2 - s0^2) = 0
+so curve T is six full straight lines: x = ±s0, y = ±s0 and y - x = ±s0.
+The Tresca hexagon H is only the inner part of these lines. The equibiaxial
+corners (s0, s0) and (-s0, -s0) are points where two lines cross (double roots).
+
+If GeoGebra refuses the optional inequality N (degree 6), skip it: T and H are enough.

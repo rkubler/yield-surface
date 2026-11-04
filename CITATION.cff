@@ -4,6 +4,7 @@ title: "Yield Surface Atlas"
 version: "1.6"
 date-released: "2026-10-11"
 type: software
+license: MIT
 authors:
   - family-names: "Kubler"
     given-names: "Régis"
