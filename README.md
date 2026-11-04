@@ -8,6 +8,7 @@ This page plots yield surfaces in principal stress space, with their π-plane se
 - **Pressure-sensitive cones (soils, rock, concrete, ductile metals):** Drucker–Prager, Mohr–Coulomb, Lade–Duncan, Matsuoka–Nakai, Hoek–Brown, Willam–Warnke, Ottosen, Bai–Wierzbicki (2008)
 - **Clays · foams · porous metals:** Modified Cam-Clay, Gurson (GTN)
 - **Powder compacts · sands · granular fills:** Drucker–Prager Cap, DiMaggio–Sandler, Kuhn–Downey, SANISAND (closed)
+- **Stress-activated martensitic transformation**
 
 It is made for educational purposes.
 
