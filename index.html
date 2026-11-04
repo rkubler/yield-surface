@@ -14,17 +14,18 @@
 /* Layout: lab-instrument console. Category rail | rotating 3D specimen | readout column (equation, pi-plane, meridians). */
 :root{
   --bg:#eef1f4; --panel:#fbfcfd; --fg:#15202b; --muted:#5b6876; --line:#d3dbe2; --grid:#e4e9ee;
-  --c0:#2b67a6; --c1:#a8661c; --c2:#8b3a78; --c3:#5d6b14; --ov:#127a6c; --cur:var(--c0);
+  --c0:#2b67a6; --c1:#a8661c; --c2:#8b3a78; --c3:#5d6b14; --c4:#b0303f; --ov:#127a6c; --cur:var(--c0);
+  --am:#80276C; --am2:#FFA300; --am2t:#B87400;
   --display:"Archivo", "Helvetica Neue", Arial, sans-serif;
   --body:"Archivo", "Helvetica Neue", Arial, sans-serif;
   --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0d1217; --panel:#141b22; --fg:#e2e8ee; --muted:#93a0ad; --line:#27323d; --grid:#1d262f;
-  --c0:#72a9e3; --c1:#e3a65a; --c2:#d483c1; --c3:#b9c96a; --ov:#4cc9b3; color-scheme:dark}}
+  --c0:#72a9e3; --c1:#e3a65a; --c2:#d483c1; --c3:#b9c96a; --c4:#ef8890; --ov:#4cc9b3; --am:#D08CC0; --am2:#FFA300; --am2t:#FFB733; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0d1217; --panel:#141b22; --fg:#e2e8ee; --muted:#93a0ad; --line:#27323d; --grid:#1d262f;
-  --c0:#72a9e3; --c1:#e3a65a; --c2:#d483c1; --c3:#b9c96a; --ov:#4cc9b3; color-scheme:dark}
+  --c0:#72a9e3; --c1:#e3a65a; --c2:#d483c1; --c3:#b9c96a; --c4:#ef8890; --ov:#4cc9b3; --am:#D08CC0; --am2:#FFA300; --am2t:#FFB733; color-scheme:dark}
 html,body{background:var(--bg);color:var(--fg)}
 body{font-family:var(--body);font-size:14px;line-height:1.5}
 *{box-sizing:border-box}
@@ -215,6 +216,20 @@ input[type=range]{width:100%;accent-color:var(--cur)}
   .app{grid-template-columns:210px minmax(0,1fr) 340px}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+/* institution colours (Arts et Métiers): violet titles, orange subtitles and rules */
+h1{color:var(--am)}
+header h1{padding-bottom:6px;border-bottom:3px solid var(--am2);justify-self:start}
+.ghead .gt{color:var(--am)}
+.ghead .gs{color:var(--am2t)}
+.card h2{color:var(--am)}
+.th h2{color:var(--am)}
+.ovname{color:var(--am)}
+.ovcat{color:var(--am2t)!important}
+.ovd h2{color:var(--am)}
+.ovd .gs{color:var(--am2t)!important}
+.pvw h2{color:var(--am)}
+.intro b{color:var(--am)}
 .refs{max-width:1640px;margin:0 auto;padding-block:8px 32px;padding-inline:16px;color:var(--muted);font-size:12px;line-height:1.55}
 .refs h2{font-family:var(--display);font-stretch:85%;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px;color:var(--muted)}
 .refs p{margin:0 0 6px;max-width:110ch}
@@ -224,7 +239,7 @@ input[type=range]{width:100%;accent-color:var(--cur)}
 <div class="app">
   <header>
     <h1>Yield Surface Atlas</h1>
-    <p class="intro">This page plots yield surfaces in principal stress space, with their π-plane sections, meridians, plane-stress cuts and, for compacting materials, loading paths, for four families of criteria: <b>pressure-insensitive criteria</b>, <b>pressure-sensitive cones</b>, <b>clays · foams · porous metals</b> and <b>powder compacts · sands · granular fills</b>. It is made for educational purposes. For more precise information, the reader is invited to read the original papers referenced under each model.</p>
+    <p class="intro">This page plots yield surfaces in principal stress space, with their π-plane sections, meridians, plane-stress cuts and, for compacting materials, loading paths, for five families of criteria: <b>pressure-insensitive criteria</b>, <b>pressure-sensitive cones</b>, <b>clays · foams · porous metals</b>, <b>powder compacts · sands · granular fills</b> and <b>stress-activated martensitic transformation</b>. It is made for educational purposes. For more precise information, the reader is invited to read the original papers referenced under each model.</p>
     <p class="credit">Dr Régis Kubler, Arts et Métiers Institute of Technology · Developed with the assistance of Claude Opus 5.5 (Anthropic), October 2026 · Version 1.6 (11 October 2026)</p>
     <p class="conv"><b>Tension positive.</b> ξ = I₁/√3 · ρ = √(2J₂) · Lode angle θ = −30° on the tensile and +30° on the compressive meridian · stresses normalized by a reference strength.</p>
   </header>
@@ -355,7 +370,8 @@ const CATS=[
  {name:'Pressure-insensitive',sub:'Metals',col:'--c0',blurb:'Only J₂ (and J₃) enter. Surfaces are prisms parallel to the hydrostatic axis: plastic flow is volume-preserving and pressure does not change strength.'},
  {name:'Pressure-sensitive cones',sub:'Soils · rock · concrete · ductile metals',col:'--c1',blurb:'I₁ enters linearly or nonlinearly. Strength grows with confinement, so the surface opens toward compression and closes at an apex in tension.'},
  {name:'Capped & porous',sub:'Clays · foams · porous metals',col:'--c2',blurb:'Closed surfaces that also yield under pure hydrostatic stress, through compaction (clays) or void growth (porous metals).'},
- {name:'Powders & granular media',sub:'Powder compacts · sands · granular fills',col:'--c3',blurb:'A shear failure line closed by a moving cap. The cap position, density or back-stress are internal variables tied to plastic strain, so these models track compaction and densification.'}
+ {name:'Powders & granular media',sub:'Powder compacts · sands · granular fills',col:'--c3',blurb:'A shear failure line closed by a moving cap. The cap position, density or back-stress are internal variables tied to plastic strain, so these models track compaction and densification.'},
+ {name:'Martensitic transformation',sub:'TRIP steels · shape memory alloys',col:'--c4',blurb:'Stress-activated transformation criteria. The austenite transforms when the work of the stress on the transformation strain, added to the chemical driving force, reaches a critical value that grows with temperature above M<sub>S</sub>. The volume change makes them pressure-sensitive and the shape strain gives a tension–compression asymmetry.'}
 ];
 const MODELS=[
  {id:'mises',cat:0,name:'von Mises',uses:[0,1,0],
@@ -522,7 +538,44 @@ const MODELS=[
     const sc=[-(sg[0]+p),-(sg[1]+p),-(sg[2]+p)],nh=[-1/S6,-1/S6,2/S6];
     let rr=0;for(let k=0;k<3;k++){const r=sc[k]-p*P.a*nh[k];rr+=r*r;}
     const g=1-Math.pow(p/P._p0,10);if(g<=0)return Math.sqrt(rr)+1e-6;
-    return Math.sqrt(rr)-P.N*p*Math.sqrt(g);}}
+    return Math.sqrt(rr)-P.N*p*Math.sqrt(g);}},
+ {id:'patel',cat:4,name:'Patel–Cohen (1953)',uses:[1,1,1],
+  tex:['f=\\tfrac{g}{2}\\,(\\sigma_1-\\sigma_3)+\\tfrac{\\varepsilon_0}{2}\\,(\\sigma_1+\\sigma_3)-U_c','g=\\sqrt{\\gamma_0^2+\\varepsilon_0^2},\\qquad U_c\\approx B\\,(T-M_S)','U=\\tau\\,\\gamma_0+\\sigma_n\\,\\varepsilon_0\\ \\ \\text{(on the habit plane)}'],
+  lab:'In principal stresses (σ₁ ≥ σ₂ ≥ σ₃)',alt:{l:'Lode-angle form',tex:['f=\\sqrt{J_2}\\left(g\\cos\\theta-\\tfrac{\\varepsilon_0}{\\sqrt3}\\sin\\theta\\right)+\\varepsilon_0\\,\\tfrac{I_1}{3}-U_c'],n:'U is the work of the stress on the transformation strain, maximized over the habit-plane orientation. U_c = |ΔG_ch(M_S)| − |ΔG_ch(T)| is the chemical driving force still missing at temperature T, close to linear in T − M_S.'},
+  note:'Transformation starts when the mechanical work U of the stress on the transformation strain of the most favourably oriented habit plane (shear γ₀ along it, dilatation ε₀ normal to it) makes up for the missing chemical driving force: U_c vanishes at M_S and grows with temperature. Maximizing U over the plane orientation gives a Mohr–Coulomb pyramid with sin φ = ε₀/g, where g = √(γ₀² + ε₀²): tension transforms first (σc/σt ≈ 1.49 for γ₀ = 0.20, ε₀ = 0.04), hydrostatic pressure suppresses the transformation, and ε₀ = 0 gives Tresca. It holds in the stress-assisted range, at temperatures where the transformation starts before the austenite slips. Stresses are normalized by σt.',
+  params:[{k:'g',label:'habit-plane shear γ₀',min:0.05,max:0.3,step:0.005,v:0.2},{k:'e',label:'dilatation ε₀',min:0,max:0.12,step:0.002,v:0.04}],
+  info:P=>{const g=Math.hypot(P.g,P.e);return `sin φ = ${(P.e/g).toFixed(3)} (φ = ${(Math.asin(P.e/g)/D2R).toFixed(1)}°) · U_c/σt = ${((g+P.e)/2).toFixed(3)}`;},
+  F:(I,P)=>{const g=Math.hypot(P.g,P.e),Uc=(g+P.e)/2;return (Math.sqrt(I.J2)*(g*Math.cos(I.th)-P.e/S3*Math.sin(I.th))+P.e*I.I1/3)/Uc-1;}},
+ {id:'atl',cat:4,name:'Auricchio–Taylor–Lubliner (1997)',uses:[1,1,0],
+  tex:['F=\\sqrt{3J_2}+\\alpha\\,I_1=q+3\\alpha p,\\qquad p=\\tfrac{I_1}{3}','F=\\sigma_s^{AS}\\,(1+\\alpha)\\ \\ \\text{(start)}','F=\\sigma_f^{AS}\\,(1+\\alpha)\\ \\ \\text{(finish)}','\\alpha=\\dfrac{\\sigma_c^{AS}-\\sigma_t^{AS}}{\\sigma_c^{AS}+\\sigma_t^{AS}}'],
+  note:'Superelastic shape memory alloys (NiTi): a Drucker–Prager loading function drives the austenite → martensite (AS) and reverse (SA) transformations between a start and a finish surface. The pressure term α gives compression a higher transformation stress than tension, σc/σt = (1 + α)/(1 − α); α = 0 is von Mises. The thresholds move with temperature (Clausius–Clapeyron). Shown here is the start surface, in units of the tensile start stress. The form is the one of later implementations (Silva et al., 2013); some authors write ‖s‖ + 3αp, which rescales α by √(2/3).',
+  params:[{k:'a',label:'pressure sensitivity α',min:0,max:0.3,step:0.005,v:0.1}],
+  F:(I,P)=>(Math.sqrt(3*I.J2)+P.a*I.I1)/(1+P.a)-1},
+ {id:'ql',cat:4,name:'Qidwai–Lagoudas (2000)',uses:[1,1,1],
+  tex:['\\Phi=\\eta\\sqrt{3J_2}\\left[1+\\nu\\,\\dfrac{J_3}{(3J_2)^{3/2}}\\right]+\\omega\\,I_1','\\pi(\\boldsymbol\\sigma,T,\\xi)=\\pm Y\\quad(\\Phi\\ \\text{enters}\\ \\pi)'],
+  lab:'Classical form',alt:{l:'Lode-angle form',tex:['\\Phi=\\eta\\sqrt{3J_2}\\left(1-\\tfrac{2\\nu}{27}\\sin3\\theta\\right)+\\omega\\,I_1']},
+  note:'Transformation surface for polycrystalline NiTi in the Lagoudas model, written as the generalized form of the review by Lagoudas et al. (2006). The J₃ term (ν) gives the tension–compression asymmetry of the transformation stresses and strains, and the I₁ term (ω) the volume change; using I₁ alone for the asymmetry would predict an unrealistic volume change. Φ enters the thermodynamic driving force π, and temperature enters through ρΔs₀(T − M_s). The π-section is convex for |ν| ≤ 27/16 ≈ 1.69 (h + h″ ≥ 0 on the polar curve, derived here, not from the paper). The values are illustrative; stresses are normalized by the tensile transformation stress.',
+  params:[{k:'nu',label:'J₃ weight ν',min:-2.5,max:2.5,step:0.05,v:1},{k:'w',label:'I₁ weight ω/η',min:0,max:0.1,step:0.002,v:0.02}],
+  warn:P=>Math.abs(P.nu)>27/16?`Non-convex: |ν| = ${Math.abs(P.nu).toFixed(2)} exceeds 27/16 ≈ 1.69, so the π-section has concave sides.`:null,
+  F:(I,P)=>{const k=1+2*P.nu/27+P.w;return (Math.sqrt(3*I.J2)*(1-2*P.nu/27*Math.sin(3*I.th))+P.w*I.I1)/k-1;}},
+ {id:'bcl',cat:4,name:'Bouvet–Calloch–Lexcellent (2004)',uses:[0,1,1],
+  tex:['f=\\sqrt{3J_2}\\;g(y)-b\\,(T-M_s)','g(y)=\\cos\\!\\left[\\tfrac13\\arccos\\big(1-a\\,(1-y)\\big)\\right]','y=\\dfrac{3\\sqrt3}{2}\\,\\dfrac{J_3}{J_2^{3/2}}'],
+  lab:'Classical form',alt:{l:'Lode-angle form',tex:['f=\\sqrt{3J_2}\\,g-b\\,(T-M_s)','g=\\cos\\!\\left[\\tfrac13\\arccos\\big(1-a\\,(1+\\sin3\\theta)\\big)\\right]'],n:'y = cos 3θ in the Lode convention of these papers, y = −sin 3θ in the convention of this page: y = 1 in tension, −1 in compression, 0 in shear.'},
+  note:'Start of the austenite → martensite transformation in shape memory alloys under multiaxial loading. g(y) = 1 in tension, so the threshold b(T − M_s) is the tensile transformation stress, and compression needs 1/g(−1) times more: σc/σt ≈ 1.27 for a = 0.7. a = 0 is von Mises, and the π-section goes from a circle to a rounded triangle; it is convex for 0 ≤ a ≤ 1 (Laydi and Lexcellent, 2008). The threshold grows linearly with temperature above M_s. Stresses are normalized by the tensile transformation stress; the hardening with the martensite fraction and the reverse transformation of the full model are not shown.',
+  params:[{k:'a',label:'asymmetry a',min:0,max:1,step:0.01,v:0.7}],
+  F:(I,P)=>{const y=-Math.sin(3*I.th),g=Math.cos(Math.acos(Math.max(-1,Math.min(1,1-P.a*(1-y))))/3);return Math.sqrt(3*I.J2)*g-1;}},
+ {id:'kubler',cat:4,name:'Kubler–Berveiller–Buessler (2011)',uses:[1,1,1],
+  tex:['f=\\tfrac{h}{3}\\,I_1+2d_{01}\\,J_2-\\tfrac{81}{16}\\,d_{02}\\,J_3-W','W=B\\,(T-M_S)+K_p+K_f'],
+  lab:'Invariant form',alt:{l:'Lode-angle form',tex:['f=\\tfrac{h}{3}\\,I_1+2d_{01}\\,J_2+\\tfrac{9\\sqrt3}{8}\\,d_{02}\\,J_2^{3/2}\\sin3\\theta-W'],n:'W is the critical driving force. In the paper the driving force F_f = h I₁/3 + 2d₀₁J₂ − (81/16)d₀₂J₃ − B(T − T₀) − K₀ reaches the critical value −B(M_S − T₀) − K₀ + K_p + K_f; K₀ and T₀ cancel.'},
+  note:'Macroscopic transformation criterion for TRIP steels, from a micromechanical scale transition of the Patel–Cohen driving force. The I₁ term is the volume change h of the γ → α′ transformation, J₂ the shear part, and the odd J₃ term (d₀₂ < 0) makes tension transform before compression. The surface is open toward hydrostatic compression and closes at an apex in hydrostatic tension. Prior plastic strain lowers the threshold (K_p < 0, strain-induced nucleation), while the martensite already formed raises it (K_f > 0). The cubic is used at small stresses only: a large |d₀₂| or W opens the compressive meridian. Stresses are in units of 100 MPa, with the values of Figs. 6–7 of the paper (d₀₁ = 6·10⁻⁴ MPa⁻¹).',
+  params:[{k:'h',label:'volume change h (%)',min:0,max:6,step:0.1,v:4},{k:'d2',label:'d₀₂ (10⁻⁷ MPa⁻²)',min:-20,max:0,step:0.5,v:-15},{k:'W',label:'critical driving force W (MPa)',min:5,max:20,step:0.5,v:10}],
+  iv:'W',
+  evo:['K_p=-k\\,(\\bar\\varepsilon^p)^n,\\qquad K_f=-j\\,\\ln(1-f)','\\dot f=\\dfrac{1-f}{\\,j}\\left[\\dot{\\boldsymbol\\sigma}:\\dfrac{\\partial F_f}{\\partial\\boldsymbol\\sigma}-B\\,\\dot T-\\dot K_p\\right]\\quad(\\text{transformation kinetics})'],
+  evoNote:'f is the martensite volume fraction and ε̄ᵖ the equivalent plastic strain of the austenite. The kinetics follows from the consistency condition on the criterion: f grows when the stress moves outward, when the temperature drops, or when plastic strain lowers the threshold. Animating W shows the surface growing with temperature above M_S (B = 2 MPa/K: W = 10 MPa is 5 K above M_S).',
+  info:P=>`stress unit 100 MPa · W = ${P.W.toFixed(1)} MPa, i.e. T − M_S = ${(P.W/2).toFixed(2)} K for B = 2 MPa/K`,
+  warn:P=>{const F=MODELS.find(m=>m.id==='kubler').F;let ok=false;for(let i=1;i<=400&&!ok;i++){const r=4*i/400,J2=r*r/2,J3=-2/(3*S3)*Math.pow(J2,1.5);if(F({I1:0,J2,J3,th:PI/6},P)>=0)ok=true;}
+    return ok?null:'Open in shear: at ξ = 0 the compressive meridian never reaches the surface, because the cubic J₃ term outweighs J₂ at these stresses. The cubic criterion only holds for smaller |d₀₂| or W.';},
+  F:(I,P)=>{const c1=P.h/100/3*100,c2=2*6e-4*1e4,c3=-81/16*P.d2*1e-7*1e6;return (c1*I.I1+c2*I.J2+c3*I.J3)/P.W-1;}}
 ];
 const PV={};MODELS.forEach(m=>{PV[m.id]={};m.params.forEach(p=>PV[m.id][p.k]=p.v);});
 /* compaction coupling: how plastic compaction ε_c = -tr ε^p moves each model's internal variable */
@@ -627,6 +680,11 @@ function tok(n){return css().getPropertyValue(n).trim();}
 
 /* ---------- parameters to identify (t = TeX token coloured in the equations, u = display, d = meaning) ---------- */
 const PARS={
+ patel:{use:'Stress-assisted martensite (Fe–Ni, Fe–Ni–C, TRIP steels below M<sub>s</sub><sup>σ</sup>): shift of M<sub>S</sub> with the stress state.',p:[['\\gamma_0','γ₀','shear of the habit plane'],['\\varepsilon_0','ε₀','dilatation normal to the habit plane'],['B','B','slope of the chemical driving force with temperature'],['M_S','M<sub>S</sub>','stress-free martensite start temperature']],s:[['T','temperature']],n:'γ₀ and ε₀ come from the crystallographic theory of martensite (0.20 and 0.04 for Fe–Ni in the figures); B and M<sub>S</sub> from the stress-free M<sub>S</sub> and its shift under tension, compression or pressure, which the paper measured.'},
+ atl:{use:'Superelastic shape memory alloys (NiTi stents, wires): finite element simulations of the stress-induced transformation.',p:[['\\alpha','α','pressure sensitivity, from the tension and compression plateaus'],['\\sigma_s^{AS}','σ<sub>s</sub><sup>AS</sup>','start of the forward transformation'],['\\sigma_f^{AS}','σ<sub>f</sub><sup>AS</sup>','end of the forward transformation']],s:[['ξ<sub>S</sub>','martensite fraction'],['T','temperature']],n:'The reverse transformation (SA) adds σ<sub>s</sub><sup>SA</sup> and σ<sub>f</sub><sup>SA</sup> on unloading, and the maximum transformation strain ε<sub>L</sub> sets the strain; all thresholds shift with temperature. Many datasets use α = 0.'},
+ bcl:{use:'Shape memory alloys (CuZnAl, CuAlBe, NiTi) under multiaxial proportional and non-proportional loading.',p:[['a','a','tension–compression asymmetry of the π-section'],['b','b','slope of the transformation stress with temperature'],['M_s','M<sub>s</sub>','stress-free martensite start temperature']],s:[['z','martensite fraction'],['T','temperature']],n:'a = 0.7 is quoted for CuZnAl and CuAlBe (Lexcellent et al., 2002); a comes from tension and compression tests, b and M<sub>s</sub> from the transformation stress at several temperatures.'},
+ ql:{use:'Polycrystalline NiTi: transformation surfaces in the Lagoudas family of shape memory alloy models.',p:[['\\eta','η','scale of the effective stress'],['\\nu','ν','J₃ weight, from the tensile and compressive transformation strains H<sub>t</sub>, H<sub>c</sub>'],['\\omega','ω','I₁ weight, one third of the volumetric transformation strain'],['Y','Y','critical value of the driving force']],s:[['ξ','martensite fraction'],['T','temperature']],n:'The driving force π also carries the entropy difference ρΔs₀ and M<sub>s</sub> (temperature dependence) and the hardening function of ξ, which are not counted here.'},
+ kubler:{use:'TRIP steels (austenite → α′ martensite): onset and kinetics of the transformation under multiaxial loading.',p:[['h','h','volume change of the transformation'],['d_{01}','d₀₁','weight of J₂, the shear part of the transformation strain'],['d_{02}','d₀₂','weight of J₃, the tension–compression asymmetry'],['B','B','slope of the chemical driving force with temperature'],['M_S','M<sub>S</sub>','stress-free martensite start temperature']],h:[['k','k','assistance by plastic strain (strain-induced nucleation sites)'],['n','n','exponent of the plastic-strain assistance'],['j','j','resistance growing with the martensite fraction']],s:[['f','martensite volume fraction'],['ε̄<sup>p</sup>','equivalent plastic strain of the austenite'],['T','temperature']],n:'Table 2 of the paper gives for AISI 304: M<sub>S</sub> = 70 K, B = 2 MPa/K, K₀ = 20 MPa, j = 1, h = 0.04, d₀₁ = 2·10⁻⁵ MPa⁻¹, d₀₂ = −2·10⁻⁷ MPa⁻², k = 400, n = 1/3. The figures use the values of Figs. 6–7 (h = 4 %, d₀₁ = 6·10⁻⁴ MPa⁻¹, d₀₂ = −15·10⁻⁷ MPa⁻², W = 10 MPa). K₀ and the equilibrium temperature T₀ cancel out of the criterion and are not counted.'},
  mises:{use:'Ductile metals; the default isotropic yield criterion in finite element codes.',p:[['\\sigma_0','σ₀','uniaxial yield stress']]},
  tresca:{use:'Metals; conservative design rules and hand calculations (maximum shear stress).',p:[['\\sigma_0','σ₀','uniaxial yield stress']]},
  drucker49:{use:'Isotropic metals whose shear-to-tension strength ratio lies between Tresca and von Mises.',p:[['\\sigma_0','σ₀','uniaxial yield stress'],['c','c','weight of J₃, from the shear-to-tension ratio τ<sub>y</sub>/σ<sub>y</sub>']]},
@@ -675,6 +733,11 @@ CATS.forEach((c,ci)=>{
 
 /* ---------- original references (a = authors, y = year, t = title, s = source) ---------- */
 const REFS={
+ patel:[{a:'J. R. Patel, M. Cohen',y:1953,t:'Criterion for the action of applied stress in the martensitic transformation',s:'Acta Metall. 1(5), 531–538'}],
+ atl:[{a:'F. Auricchio, R. L. Taylor, J. Lubliner',y:1997,t:'Shape-memory alloys: macromodelling and numerical simulations of the superelastic behavior',s:'Comput. Methods Appl. Mech. Eng. 146, 281–312'}],
+ bcl:[{a:'C. Bouvet, S. Calloch, C. Lexcellent',y:2004,t:'A phenomenological model for pseudoelasticity of shape memory alloys under multiaxial proportional and nonproportional loadings',s:'Eur. J. Mech. A/Solids 23, 37–61'}],
+ ql:[{a:'M. A. Qidwai, D. C. Lagoudas',y:2000,t:'On thermomechanics and transformation surfaces of polycrystalline NiTi shape memory alloy material',s:'Int. J. Plast. 16, 1309–1343'},{a:'D. C. Lagoudas, P. B. Entchev, P. Popov, E. Patoor, L. C. Brinson, X. Gao',y:2006,t:'Shape memory alloys, Part II: Modeling of polycrystals',s:'Mech. Mater. 38, 430–462'}],
+ kubler:[{a:'R. F. Kubler, M. Berveiller, P. Buessler',y:2011,t:'Semi phenomenological modelling of the behavior of TRIP steels',s:'Int. J. Plast. 27, 299–327'},{a:'J. R. Patel, M. Cohen',y:1953,t:'Criterion for the action of applied stress in the martensitic transformation',s:'Acta Metall. 1(5), 531–538'}],
  mises:[{a:'R. von Mises',y:1913,t:'Mechanik der festen Körper im plastisch-deformablen Zustand',s:'Nachr. Ges. Wiss. Göttingen, Math.-Phys. Kl., 582–592'}],
  tresca:[{a:'H. Tresca',y:1864,t:"Sur l'écoulement des corps solides soumis à de fortes pressions",s:'C. R. Acad. Sci. Paris 59, 754–758'}],
  drucker49:[{a:'D. C. Drucker',y:1949,t:'Relation of experiments to mathematical theories of plasticity',s:'J. Appl. Mech. 16, 349–357'}],
@@ -933,7 +996,7 @@ function stepRun(dt,now){
 function updateEvoInfo(){const el=document.getElementById('evoInfo');el.textContent=cur.info?cur.info(PV[cur.id]):'';}
 function stopEvo(){ivAnim=false;const b=document.getElementById('bEvo');if(b)b.setAttribute('aria-pressed','false');}
 function renderEq(){
-  if(!merUser&&typeof syncMer==='function'){merMode=cur.cat>=2?'pq':'xr';syncMer();}
+  if(!merUser&&typeof syncMer==='function'){merMode=(cur.cat===2||cur.cat===3)?'pq':'xr';syncMer();}
   const el=document.getElementById('eq');
   const kx=t=>{try{return katex.renderToString(colorPars(t,cur.id),{output:'mathml',displayMode:true,throwOnError:false}).replace(/mathcolor="#a020f0"/g,'class="par"');}catch(e){return `<code>${t}</code>`;}};
   // Classical form first, Lode-angle form second
@@ -1082,6 +1145,10 @@ const CSYM={
   dp:{t0:'√2·k',c0:'√2·k',A:'k/(√3·α)',ut:'k/(α + 1/√3)',uc:'k/(1/√3 − α)'},
   mc:{t0:'2√6·c·cos φ/(3 + sin φ)',c0:'2√6·c·cos φ/(3 − sin φ)',A:'√3·c·cot φ',ut:'2c·cos φ/(1 + sin φ)',uc:'2c·cos φ/(1 − sin φ)'},
   ottosen:{uc:'f_c'},
+  patel:{t0:'2√6·U_c/(3g + ε₀)',c0:'2√6·U_c/(3g − ε₀)',A:'√3·U_c/ε₀',ut:'2U_c/(g + ε₀)',uc:'2U_c/(g − ε₀)'},
+  atl:{t0:'√(2/3)·R',c0:'√(2/3)·R',A:'R/(√3·α)',ut:'R/(1 + α)',uc:'R/(1 − α)'},
+  bcl:{t0:'√(2/3)·σt',uc:'σt/cos[⅓ arccos(1 − 2a)]'},
+  ql:{ut:'k/(1 + 2ν/27 + ω)',uc:'k/(1 − 2ν/27 − ω)'},
   hb:{A:'√3·s·σc/m',ut:'(σc/2)(√(m² + 4s) − m)',uc:'√s·σc'}};
 function renderMerKey(){const el=document.getElementById('merKey');if(!el)return;
   if(!CH){el.innerHTML='';return;}const S=CSYM[cur.id]||{},pq=merMode==='pq',r2=Math.sqrt(1.5),f=v=>(Math.abs(v)<5e-4?0:v).toFixed(3);
@@ -1259,6 +1326,10 @@ const PRESETS=[
  {label:'Bai–Wierzbicki vs von Mises',a:'bw',b:'mises'},
  {label:'DP Cap vs Drucker–Prager',a:'dpc',b:'dp',set:()=>{Object.assign(PV.dp,{a:0.1617,k:0.2021});}},
  {label:'Modified Cam-Clay vs SANISAND',a:'mcc',b:'sanisand'},
+ {label:'Patel–Cohen vs Mohr–Coulomb',a:'patel',b:'mc'},
+ {label:'Patel–Cohen vs Kubler et al.',a:'patel',b:'kubler'},
+ {label:'Bouvet et al. vs Cazacu–Barlat',a:'bcl',b:'cb'},
+ {label:'Auricchio et al. vs Drucker–Prager',a:'atl',b:'dp'},
  {label:'DiMaggio–Sandler vs DP Cap',a:'ds',b:'dpc'},
  {label:'Kuhn–Downey vs Gurson',a:'kd',b:'gurson'}
 ];
