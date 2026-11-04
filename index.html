@@ -456,12 +456,12 @@ const MODELS=[
     const cax=tb>=0?1:P.cc,L=P.cs+(cax-P.cs)*(g-Math.pow(g,m+1)/(m+1)),A=L*(1+P.ce/3),D=A*A-4*L*P.ce*sm;
     if(D<0)return 1;return sq-(A+Math.sqrt(D))/2;}},
  {id:'mcc',cat:2,name:'Modified Cam-Clay',uses:[1,1,0],
-  tex:['f=\\tfrac{3J_2}{M^2}+\\tfrac{I_1}{3}\\left(\\tfrac{I_1}{3}+p_c\\right)','\\text{i.e. } q^2/M^2+p\\,(p-p_c)=0'],
+  tex:['f=\\tfrac{3J_2}{M^2}+\\tfrac{I_1}{3}\\left(\\tfrac{I_1}{3}+p_c\\right)','\\text{i.e. } \\dfrac{q^2}{M^2}+p\\,(p-p_c)=0,\\qquad p=-\\tfrac{I_1}{3},\\ \\ q=\\sqrt{3J_2}'],
   note:'Ellipsoidal surface for normally consolidated clay. It yields in pure compression at p = p_c, and M is the critical-state stress ratio. Volumetric hardening moves p_c.',
   params:[{k:'M',label:'M',min:0.6,max:1.8,step:0.01,v:1.2},{k:'rho',label:'compacity ρ = 1/(1+e)',min:0.476,max:0.6,step:0.001,v:0.556}],
   iv:'rho',
   prep:P=>{P._pc=Math.exp((0.901-(1/P.rho-1))/0.25);},
-  evo:['e=e_N-\\lambda\\ln p_c\\quad(\\text{normal compression line})\\ \\Rightarrow\\ p_c=\\exp\\!\\left(\\tfrac{e_N-e}{\\lambda}\\right)','\\dot e=-(1+e)\\,\\dot\\varepsilon_v^p,\\qquad \\rho=\\tfrac{1}{1+e},\\qquad \\dot\\rho=\\rho\\,\\dot\\varepsilon_v^p','\\dot p_c=\\dfrac{1+e}{\\lambda-\\kappa}\\,p_c\\,\\dot\\varepsilon_v^p,\\qquad \\dot\\varepsilon_v^p=\\dot\\lambda\\,(2p-p_c)'],
+  evo:['e=e_N-\\lambda\\ln p_c\\quad(\\text{normal compression line})\\ \\Rightarrow\\ p_c=\\exp\\!\\left(\\tfrac{e_N-e}{\\lambda}\\right)','\\dot e=-(1+e)\\,\\dot\\varepsilon_v^p,\\qquad \\rho=\\tfrac{1}{1+e},\\qquad \\dot\\rho=\\rho\\,\\dot\\varepsilon_v^p','\\dot p_c=\\dfrac{1+e}{\\lambda-\\kappa}\\,p_c\\,\\dot\\varepsilon_v^p,\\qquad \\dot\\varepsilon_v^p=\\dot\\gamma\\,(2p-p_c)\\quad(\\dot\\gamma:\\ \\text{plastic multiplier})'],
   evoNote:'e is the void ratio, the volume of voids divided by the volume of solids; the compacity is ρ = 1/(1+e). The initial ρ₀ = 1/(1+e₀) fixes the initial cap through the normal compression line: a denser soil starts with a larger p_c. Here e_N = 0.901 and λ = 0.25 (rigid-plastic, κ neglected). Wet side (p > p_c/2): compaction and hardening; dry side: softening.',
   info:P=>`e = ${(1/P.rho-1).toFixed(3)} · p_c = ${P._pc.toFixed(3)}`,
   F:(I,P)=>3*I.J2/(P.M*P.M)+I.I1/3*(I.I1/3+P._pc)},
@@ -503,7 +503,7 @@ const MODELS=[
   note:'Early yield criterion for sintered and compacted metal powders (powder forging). The apparent plastic Poisson ratio ν grows with relative density ρ_r; at ρ_r = 1, ν = 0.5 and the surface becomes a von Mises cylinder.',
   params:[{k:'rho',label:'compacity ρ_r (relative density)',min:0.55,max:0.98,step:0.005,v:0.75}],
   iv:'rho',
-  evo:['\\dot\\rho_r=-\\rho_r\\,\\mathrm{tr}\\,\\dot{\\boldsymbol\\varepsilon}^p\\quad(\\text{mass conservation})','\\mathrm{tr}\\,\\dot{\\boldsymbol\\varepsilon}^p=3\\dot\\lambda\\,\\dfrac{\\partial f}{\\partial I_1}=6\\dot\\lambda\\,(1-2\\nu)\\,I_1'],
+  evo:['\\dot\\rho_r=-\\rho_r\\,\\mathrm{tr}\\,\\dot{\\boldsymbol\\varepsilon}^p\\quad(\\text{mass conservation})','\\mathrm{tr}\\,\\dot{\\boldsymbol\\varepsilon}^p=3\\dot\\gamma\\,\\dfrac{\\partial f}{\\partial I_1}=6\\dot\\gamma\\,(1-2\\nu)\\,I_1'],
   evoNote:'Under compression (I₁ < 0) plastic flow reduces volume, density rises, ν approaches ½ and the closed ellipsoid stretches into a cylinder. Y_R = Y₀ρ_r² is one common fit for the apparent strength; Y₀ = 2.2 here.',
   info:P=>{const nu=0.5*Math.pow(P.rho,1.92);return `ν = ${nu.toFixed(3)} · Y_R = ${(2.2*P.rho*P.rho).toFixed(3)}`;},
   F:(I,P)=>{const nu=0.5*Math.pow(P.rho,1.92),Y=2.2*P.rho*P.rho;return Math.sqrt(3*I.J2+(1-2*nu)*I.I1*I.I1)-Y;}},
@@ -515,8 +515,8 @@ const MODELS=[
   iv:'a',
   ctr:(xi,P)=>{const p=-xi/S3;return [0.5*p*P.a,0.8660254*p*P.a];},
   prep:P=>{P._p0=Math.exp((0.901-(1/P.rho-1))/0.25);},
-  evo:['\\dot{\\boldsymbol\\alpha}=\\langle L\\rangle\\,\\tfrac23\\,h\\,\\left(\\boldsymbol\\alpha^b_\\theta-\\boldsymbol\\alpha\\right)','\\boldsymbol\\alpha^b_\\theta=\\sqrt{\\tfrac23}\\left[g(\\theta,c)\\,M_c\\,e^{-n^b\\psi}-N\\right]\\mathbf{n}','p_0=\\exp\\!\\left(\\tfrac{e_N-e}{\\lambda}\\right),\\qquad \\dot p_0=\\dfrac{1+e}{\\lambda-\\kappa}\\,p_0\\,\\dot\\varepsilon_v^p','\\psi=e-e_c(p),\\quad e_c=e_{c0}-\\lambda_c\\,(p/p_{at})^{\\xi}','\\dot e=-(1+e)\\,\\dot\\varepsilon_v'],
-  evoNote:'The back-stress ratio α moves toward a bounding image α^b whose size depends on the state parameter ψ (dense sand: ψ < 0, larger α^b, dilation). p₀ grows with plastic compaction. Animating α shows the cone rotating toward the compressive meridian; here n = 10. The initial compacity ρ₀ = 1/(1+e₀) fixes p₀ through the compression line (e_N = 0.901, λ = 0.25).',
+  evo:['\\dot{\\boldsymbol\\alpha}=\\langle L\\rangle\\,\\tfrac23\\,h\\,\\left(\\boldsymbol\\alpha^b_\\theta-\\boldsymbol\\alpha\\right)','\\boldsymbol\\alpha^b_\\theta=\\left[\\sqrt{\\tfrac23}\\,g(\\theta,c)\\,M_c\\,e^{-n^b\\psi}-N\\right]\\mathbf{n}','p_0=\\exp\\!\\left(\\tfrac{e_N-e}{\\lambda}\\right),\\qquad \\dot p_0=\\dfrac{1+e}{\\lambda-\\kappa}\\,p_0\\,\\dot\\varepsilon_v^p','\\psi=e-e_c(p),\\quad e_c=e_{c0}-\\lambda_c\\,(p/p_{at})^{\\xi}','\\dot e=-(1+e)\\,\\dot\\varepsilon_v'],
+  evoNote:'The back-stress ratio α moves toward a bounding image α^b whose size depends on the state parameter ψ (dense sand: ψ < 0, larger α^b, dilation). p₀ grows with plastic compaction, through a Cam-Clay-type compression law used here for simplicity. N here stands for √(2/3)·m of the original paper. Animating α shows the cone rotating toward the compressive meridian; here n = 10. The initial compacity ρ₀ = 1/(1+e₀) fixes p₀ through the compression line (e_N = 0.901, λ = 0.25).',
   info:P=>`e = ${(1/P.rho-1).toFixed(3)} · p₀ = ${P._p0.toFixed(3)} · ‖α‖ = ${P.a.toFixed(3)}`,
   F:(I,P)=>{const sg=I.sig,p=-I.I1/3;if(p<=1e-9)return 1;
     const sc=[-(sg[0]+p),-(sg[1]+p),-(sg[2]+p)],nh=[-1/S6,-1/S6,2/S6];
@@ -968,7 +968,7 @@ function planeCut(m,P){
     for(let i=1;i<=N;i++){const q=i/N,rr=RM*q*q;if(!(Fs(m,P,c+rr*ca,c+rr*sa)<0)){let A=lo,B=rr;for(let j=0;j<24;j++){const M=(A+B)/2;if(Fs(m,P,c+M*ca,c+M*sa)<0)A=M;else B=M;}r=(A+B)/2;break;}lo=rr;}
     pts.push([c+r*ca,c+r*sa]);}
   return pts;}
-function uniax(m,P,dir){if(!(Fs(m,P,0,0)<0))return null;let lo=0,hi=null;
+function uniax(m,P,dir){if(!(Fs(m,P,0,0)<0)&&!(Fs(m,P,dir*1e-4,0)<0))return null;let lo=0,hi=null;
   for(let i=1;i<=80;i++){const q=i/80,s=8*q*q;if(!(Fs(m,P,dir*s,0)<0)){hi=s;break;}lo=s;}
   if(hi===null)return null;for(let j=0;j<30;j++){const M=(lo+hi)/2;if(Fs(m,P,dir*M,0)<0)lo=M;else hi=M;}return (lo+hi)/2;}
 function setCutLine(L,pts){if(!pts){L.visible=false;return;}const a=L.geometry.attributes.position.array;
@@ -1094,6 +1094,7 @@ function renderMerKey(){const el=document.getElementById('merKey');if(!el)return
   if(CH.B!==undefined)L.push(row('B',`cap end, hydrostatic compression: ξ = <span class="v">${f(CH.B)}</span>${pq?` · p = ${f(CH.B/S3)}`:''}`));
   if(CH.ut)L.push(row('σt',`uniaxial tension: σt = ${eq('ut',CH.ut)}`));
   if(CH.uc)L.push(row('σc',`uniaxial compression: σc = ${eq('uc',CH.uc)}`));
+  if(pq&&['mcc','dpc','sanisand'].includes(cur.id))L.push(row('p','sign: the plot uses p = I₁/3 (tension positive, like the rest of the page), while the equations of this model use p = −I₁/3 (compression positive); its compression side is on the left.'));
   el.innerHTML=L.join('');}
 
 function drawPi(){

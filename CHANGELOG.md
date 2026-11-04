@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Review fixes: Cam-Clay and Kuhn–Downey write the plastic multiplier as γ̇, so λ only means the compression index; the SANISAND bounding image is written consistently with the cone size N of the yield function (N = √(2/3)·m), and its Cam-Clay-type cap law is labelled as a simplification; Cam-Clay states p = −I₁/3 and q = √(3J₂) next to its equation; the uniaxial compressive strength is now found for surfaces that pass through the origin (Cam-Clay: σc shown in the plane-stress readout and on the meridians); in p–q mode the meridian key warns that the cap models use p = −I₁/3 in their equations.
+- Hosford: principal stresses σ_k written from the invariants and numbered k = 1, 2, 3.
+- Introduction: the reader is invited to read the original papers referenced under each model.
 - Loading paths: each path chip is now a show/hide toggle for its curves (3D view, plane stress and compaction plots), with show all / hide all; the path to animate is chosen in a list next to Run path. The choice is remembered. In the full view, clicking a legend entry hides or shows that curve.
 - Full view for every plot (⤢ button on the π-plane, plane-stress, meridian, Lode and compaction plots): a full-window viewer with wheel zoom (shift: x only, alt: y only), drag to pan, pinch on touch screens, typed axis ranges, equal scale, linear or log x for the compaction plots, a readout of the nearest data point, PNG export, an "Open in new window" button that opens the same viewer as a separate page, and (in the claude.ai view) "Save as page" to keep the plot as a standalone HTML file.
 - Compaction plots: switch between a linear stress axis ‖σ‖ (default) and log ‖σ‖; the choice is remembered.
