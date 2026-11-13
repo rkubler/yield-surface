@@ -258,7 +258,7 @@ header h1{padding-bottom:6px;border-bottom:3px solid var(--am2);justify-self:sta
       </div>
       <div class="overlay">
         <div><div class="ovname" id="ovName">von Mises</div><div class="ovvs" id="ovVs" hidden></div><div class="ovcat" id="ovCat"></div></div>
-        <div class="ovhint" id="ovHint">Drag to orbit · scroll to zoom<br>Principal stress space σ₁ σ₂ σ₃</div>
+        <div class="ovhint" id="ovHint">Drag to orbit · scroll to zoom<br>Principal stress space σ₁ σ₂ σ₃<br><span id="ovScale" hidden></span></div>
       </div>
     </div>
     <div class="plots" id="plots">
@@ -309,7 +309,7 @@ header h1{padding-bottom:6px;border-bottom:3px solid var(--am2);justify-self:sta
       <div class="pchips" id="pathChips"></div>
       <div class="evorow"><label class="runlbl" for="runSel">Run</label><select id="runSel" class="runsel" aria-label="Path to run"></select><button type="button" class="btn2" id="bRun">▶ Run path</button><button type="button" class="btn2" id="bReset" disabled>Reset state</button></div>
       <p class="evoinfo pinfo" id="pathInfo"></p>
-      <p class="legend" id="pathNote">Proportional stress paths σ = λ·d starting from the current state; set the initial compacity with the model's compacity slider above. The path is driven by density: the compacity is stepped from its initial value up to full density (ρ = 0.999), and for each state the stress that keeps σ on the hardened surface (f = 0) is found, with associated flow giving plastic compaction ε<sub>v</sub><sup>p</sup> = −tr ε<sup>p</sup> = ln(ρ/ρ₀). When the flow at first yield is dilatant (tension, shear, or the dry side of the cap), the compacity is stepped down instead, toward the loosest state (tap density, or 1 − 1/q₁ for Gurson): the material loosens or its voids grow, and the stress softens, stays constant on a shear line, or ends at a critical state where the flow turns isochoric. A compacting path stops early (×) when its flow turns isochoric or dilatant. Full density needs a very large stress, so the stress axis can be switched from linear ‖σ‖ to log ‖σ‖ to see the start of the path; in 3D the rays are cut at the edge of the view. Elastic strains are left out. Click a path to show or hide its curves (3D view, plane stress and compaction plots); choose the path to animate in the list next to Run path.</p>
+      <p class="legend" id="pathNote">Proportional stress paths σ = λ·d starting from the current state; set the initial compacity with the model's compacity slider above. The path is driven by density: the compacity is stepped from its initial value up to full density (ρ = 0.999), and for each state the stress that keeps σ on the hardened surface (f = 0) is found, with the model's flow rule (associated, except on the shear line of the Drucker–Prager Cap, which follows Abaqus) giving plastic compaction ε<sub>v</sub><sup>p</sup> = −tr ε<sup>p</sup> = ln(ρ/ρ₀). When the flow at first yield is dilatant (tension, shear, or the dry side of the cap), the compacity is stepped down instead, toward the loosest state (tap density, or 1 − 1/q₁ for Gurson): the material loosens or its voids grow, and the stress softens, stays constant on a shear line, or ends at a critical state where the flow turns isochoric. A compacting path stops early (×) when its flow turns isochoric or dilatant. Full density needs a very large stress, so the stress axis can be switched from linear ‖σ‖ to log ‖σ‖ to see the start of the path; in 3D the rays are cut at the edge of the view. Elastic strains are left out. Click a path to show or hide its curves (3D view, plane stress and compaction plots); choose the path to animate in the list next to Run path.</p>
     </section>
     <section class="card" id="cmpCard">
       <h2>Compare two surfaces</h2>
@@ -353,6 +353,8 @@ header h1{padding-bottom:6px;border-bottom:3px solid var(--am2);justify-self:sta
 (function(){
 const S3=Math.sqrt(3),S2=Math.sqrt(2),S6=Math.sqrt(6),D2R=Math.PI/180,PI=Math.PI;
 const RMAX=4, SCAN=5.2, OPEN=3.2, NX=64, NT=96;
+/* view scale: when a cap (compaction models) closes beyond the plotted range, every view zooms out by US so the whole surface stays visible */
+let US=1;const US_FIT=4.4,US_STEPS=[1,1.25,1.5,2,2.5,3,4,5,6,8,10,12.5,15,20,25,30,40,50];
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- stress state from Haigh–Westergaard coordinates ---------- */
@@ -495,12 +497,16 @@ const MODELS=[
   params:[{k:'beta',label:'friction angle β (°)',min:15,max:60,step:0.5,v:40},{k:'d',label:'cohesion d',min:0.1,max:0.8,step:0.01,v:0.35},{k:'R',label:'cap eccentricity R',min:0.2,max:1.2,step:0.01,v:0.5},{k:'rho',label:'compacity ρ_r (relative density)',min:0.52,max:0.9,step:0.002,v:0.6}],
   iv:'rho',
   prep:P=>{const tb=Math.tan(P.beta*D2R);P._pb=Math.max(0.05,(Math.log(1/(1-P.rho))-Math.LN2)/0.25);P._pa=Math.max(0,(P._pb-P.R*P.d)/(1+P.R*tb));P._tb=tb;},
-  evo:['\\ln\\dfrac{1}{1-\\rho_r}=K\\,p_b+A\\quad(\\text{Heckel})','p_a=\\dfrac{p_b-R\\,d}{1+R\\tan\\beta}','\\dot\\rho_r=\\rho_r\\,\\dot\\varepsilon_v^p,\\qquad \\dot\\varepsilon_v^p=-\\mathrm{tr}\\,\\dot{\\boldsymbol\\varepsilon}^p','d=d(\\rho_r),\\ \\ \\beta=\\beta(\\rho_r),\\ \\ R=R(\\rho_r)'],
-  evoNote:'The compacity (relative density) ρ_r is the state variable. Its initial value fixes the initial cap p_b through the Heckel compaction law; plastic compaction then raises ρ_r and pushes the cap out. Here K = 0.25 and A = ln 2 (tap density 0.5). In practice d, β and R are also calibrated against ρ_r.',
+  evo:['\\ln\\dfrac{1}{1-\\rho_r}=K\\,p_b+A\\quad(\\text{Heckel})','p_a=\\dfrac{p_b-R\\,d}{1+R\\tan\\beta}','\\dot\\rho_r=\\rho_r\\,\\dot\\varepsilon_v^p,\\qquad \\dot\\varepsilon_v^p=-\\mathrm{tr}\\,\\dot{\\boldsymbol\\varepsilon}^p','d=d(\\rho_r),\\ \\ \\beta=\\beta(\\rho_r),\\ \\ R=R(\\rho_r)','\\dot{\\boldsymbol\\varepsilon}^p=\\dot\\gamma\\,\\dfrac{\\partial G}{\\partial\\boldsymbol\\sigma},\\qquad G_s=\\sqrt{\\big((p_a-p)\\tan\\beta\\big)^2+q^2}\\ \\ (p\\le p_a),\\qquad G_c=\\sqrt{(p-p_a)^2+(Rq)^2}\\ \\ (p>p_a)'],
+  evoNote:'The compacity (relative density) ρ_r is the state variable. Its initial value fixes the initial cap p_b through the Heckel compaction law; plastic compaction then raises ρ_r and pushes the cap out. Here K = 0.25 and A = ln 2 (tap density 0.5). In practice d, β and R are also calibrated against ρ_r. Flow rule as in Abaqus: associated on the cap (G_c has the shape of F_c), non-associated on the shear line, where the elliptical potential G_s gives less dilation than the normal to F_s and none at p = p_a, which acts as a critical state; the arrows on the meridian plot show the flow direction ∂G/∂σ.',
   info:P=>`p_b = ${P._pb.toFixed(3)} · p_a = ${P._pa.toFixed(3)} · ρ_r = ${P.rho.toFixed(3)}`,
   F:(I,P)=>{const p=-I.I1/3,q=Math.sqrt(3*I.J2);
     if(p<=P._pa)return q-p*P._tb-P.d;
-    return (Math.sqrt((p-P._pa)**2+(P.R*q)**2)-P.R*(P.d+P._pa*P._tb))/P.R;}},
+    return (Math.sqrt((p-P._pa)**2+(P.R*q)**2)-P.R*(P.d+P._pa*P._tb))/P.R;},
+  /* flow potential as in Abaqus (no transition surface, α = 0): non-associated elliptical G_s on the shear line, associated G_c on the cap */
+  G:(I,P)=>{const p=-I.I1/3,q=Math.sqrt(3*I.J2);
+    if(p<=P._pa)return Math.sqrt(((P._pa-p)*P._tb)**2+q*q);
+    return Math.sqrt((p-P._pa)**2+(P.R*q)**2)/P.R;}},
  {id:'ds',cat:3,name:'DiMaggio–Sandler',uses:[1,1,0],
   tex:['f_e=\\sqrt{J_2}-\\left(A-C\\,e^{-B\\bar I_1}\\right)\\quad(\\bar I_1\\le L)','f_c=(\\bar I_1-L)^2+R^2J_2-(X-L)^2\\quad(\\bar I_1>L)','\\bar I_1=-I_1\\ge -T\\ \\ (\\text{tension cut-off})'],
   note:'The original cap model for soils (1971), later used for sands, rock and concrete. An exponential failure envelope, an elliptical cap that moves with plastic volume change, and a tension cut-off.',
@@ -601,6 +607,8 @@ PATHS.forEach(q=>{const n=Math.hypot(...q.d);q.u=q.d.map(x=>x/n);q.on=true;});
 const LMAX=5,RHO_END=0.999,NSTEP=140,VIEWL=5.5;
 /* Density-driven proportional path: march the compacity from its initial value to RHO_END and,
    for each state, find the stress magnitude that keeps σ = λ·d on the hardened surface (f = 0). */
+/* plastic potential: m.G when the model has a non-associated flow rule, else the yield function (associated flow) */
+function flowG(m){return m.G||m.F;}
 function runPath(m,P0,u){
   const c=m.comp,v0=P0[c.k];
   const Pat=e=>{const P=Object.assign({},P0);P[c.k]=c.map(v0,e);if(m.prep)m.prep(P);return P;};
@@ -615,7 +623,7 @@ function runPath(m,P0,u){
   const pts=[[0,0],[ly,0]],states=[[0,v0],[ly,v0]];let prevL=ly,prevP=P00,fail=null,full=false;
   for(let k=1;k<=NSTEP;k++){
     const sg=[prevL*u[0],prevL*u[1],prevL*u[2]],h=1e-5*Math.max(1,prevL);let tr=0;
-    for(let i=0;i<3;i++){const A=sg.slice(),B=sg.slice();A[i]+=h;B[i]-=h;tr+=(m.F(inv(A),prevP)-m.F(inv(B),prevP))/(2*h);}
+    for(let i=0;i<3;i++){const A=sg.slice(),B=sg.slice();A[i]+=h;B[i]-=h;tr+=(flowG(m)(inv(A),prevP)-flowG(m)(inv(B),prevP))/(2*h);}
     if(!(-tr>1e-7)){if(k===1&&c.dil&&tr>1e-7)return dilPath(m,P0,u,Pat,lamRoot,r0,ly,v0);fail=prevL;break;}
     const rk=1-(1-r0)*Math.pow((1-RHO_END)/(1-r0),k/NSTEP),e=Math.log(rk/r0),P=Pat(e),lk=lamRoot(P);
     if(!isFinite(lk)||lk<prevL-1e-9){fail=prevL;break;}
@@ -625,7 +633,7 @@ function runPath(m,P0,u){
 /* dilatant branch: plastic flow increases volume, so the compacity falls toward the loosest state c.dil
    (voids grow in porous metals, granular media loosen); ends at c.dil, at an isochoric (critical) state, or at loss of strength */
 function trN(m,P,L,u){const sg=[L*u[0],L*u[1],L*u[2]],h=1e-5*Math.max(1,L);let tr=0;
-  for(let i=0;i<3;i++){const A=sg.slice(),B=sg.slice();A[i]+=h;B[i]-=h;tr+=(m.F(inv(A),P)-m.F(inv(B),P))/(2*h);}return tr;}
+  for(let i=0;i<3;i++){const A=sg.slice(),B=sg.slice();A[i]+=h;B[i]-=h;tr+=(flowG(m)(inv(A),P)-flowG(m)(inv(B),P))/(2*h);}return tr;}
 function dilPath(m,P0,u,Pat,lamRoot,r0,ly,v0){
   const c=m.comp,pts=[[0,0],[ly,0]],states=[[0,v0],[ly,v0]];let end='floor';
   if(!(c.dil<r0-1e-4))return {pts,states,yieldL:ly,fail:null,full:false,soft:true,end};
@@ -646,19 +654,26 @@ function evalF(m,P,xi,rho,om){return m.F(inv(point(xi,rho,om,ctrOf(m,P,xi))),P);
 function rhoAt(m,P,xi,om){
   if(!(evalF(m,P,xi,0,om)<0))return 0;
   const N=56;let lo=0;
-  for(let i=1;i<=N;i++){const q=i/N,r=RMAX*q*q,v=evalF(m,P,xi,r,om);
+  for(let i=1;i<=N;i++){const q=i/N,r=RMAX*US*q*q,v=evalF(m,P,xi,r,om);
     if(!(v<0)){let a=lo,b=r;for(let k=0;k<22;k++){const c=(a+b)/2;if(evalF(m,P,xi,c,om)<0)a=c;else b=c;}return (a+b)/2;}
     lo=r;}
-  return RMAX;}
-function domainOf(m,P){
-  const st=0.05;let lo=null,hi=null;
-  for(let x=-SCAN;x<=SCAN+1e-9;x+=st){if(evalF(m,P,x,0,0)<0){if(lo===null)lo=x;hi=x;}}
+  return RMAX*US;}
+function domainOf(m,P,s){
+  s=s||US;const st=0.05*s,SC=SCAN*s;let lo=null,hi=null;
+  for(let x=-SC;x<=SC+1e-9;x+=st){if(evalF(m,P,x,0,0)<0){if(lo===null)lo=x;hi=x;}}
   if(lo===null)return null;
   const ref=(a,b)=>{for(let k=0;k<30;k++){const c=(a+b)/2;if(evalF(m,P,c,0,0)<0)b=c;else a=c;}return b;};
-  let loC=lo>-SCAN+1e-6,hiC=hi<SCAN-1e-6;
-  if(loC)lo=ref(lo-st,lo);else lo=-OPEN;
-  if(hiC){let a=hi,b=hi+st;for(let k=0;k<30;k++){const c=(a+b)/2;if(evalF(m,P,c,0,0)<0)a=c;else b=c;}hi=a;}else hi=OPEN;
+  let loC=lo>-SC+1e-6,hiC=hi<SC-1e-6;
+  if(loC)lo=ref(lo-st,lo);else lo=-OPEN*s;
+  if(hiC){let a=hi,b=hi+st;for(let k=0;k<30;k++){const c=(a+b)/2;if(evalF(m,P,c,0,0)<0)a=c;else b=c;}hi=a;}else hi=OPEN*s;
   return {lo,hi,loC,hiC};}
+/* zoom a compaction model out until its closed ends on the hydrostatic axis fit the plotted range */
+function capNeed(m,P){if(!m||!m.comp)return 1;if(m.prep)m.prep(P);
+  for(const s of [1,2,4,8,16,32]){const D=domainOf(m,P,s);if(!D)return 1;
+    const e=Math.max(D.loC?-D.lo:0,D.hiC?D.hi:0);if(D.loC||s===32)return Math.max(1,e/US_FIT);}
+  return 1;}
+function pickUS(){const n=Math.max(capNeed(cur,PV[cur.id]),ov?capNeed(ov,PV[ov.id]):1);
+  return US_STEPS.find(v=>v>=n-1e-9)||US_STEPS[US_STEPS.length-1];}
 
 /* ---------- surface grid ---------- */
 function buildPositions(m,P){
@@ -800,7 +815,7 @@ for(let j=0;j<NT;j+=NT/12)for(let i=0;i<NX;i++)lidx.push(i*NT+j,(i+1)*NT+j);
 for(let i=0;i<=NX;i+=8)for(let j=0;j<NT;j++)lidx.push(i*NT+j,i*NT+(j+1)%NT);
 const wireGeo=new THREE.BufferGeometry();wireGeo.setAttribute('position',posAttr);wireGeo.setIndex(lidx);
 const wireMat=new THREE.LineBasicMaterial({color:0x444444,transparent:true,opacity:0.55});
-scene.add(new THREE.LineSegments(wireGeo,wireMat));
+const wire=new THREE.LineSegments(wireGeo,wireMat);scene.add(wire);
 
 /* overlay surface */
 const posAttr2=new THREE.BufferAttribute(new Float32Array((NX+1)*NT*3),3);
@@ -834,6 +849,8 @@ function makeLabel(text,color){
   g.font=F;g.fillStyle=color;g.textAlign='center';g.textBaseline='middle';g.fillText(text,w/2,48);c._w=w;
   const t=new THREE.CanvasTexture(c);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));
   sp.scale.set(0.9*c._w/256,0.34,1);return sp;}
+function axisStep(){const v=US,e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;}
+function fmtTick(w){return (w<0?'−':'')+(+Math.abs(w).toFixed(2));}
 function buildAxes(){
   while(axisGroup.children.length){const o=axisGroup.children.pop();o.geometry&&o.geometry.dispose();o.material&&(o.material.map&&o.material.map.dispose(),o.material.dispose());}
   const fg=tok('--fg'),mu=tok('--muted');
@@ -842,7 +859,13 @@ function buildAxes(){
   for(let k=0;k<3;k++){const d=axisDir(k);
     axisGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),d.clone().multiplyScalar(AL)]),pm));
     axisGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),d.clone().multiplyScalar(-AL)]),nm));
-    const l=makeLabel(['+σ₁','+σ₂','+σ₃'][k],fg);l.position.copy(d.clone().multiplyScalar(AL+0.35));axisGroup.add(l);}
+    const l=makeLabel(['+σ₁','+σ₂','+σ₃'][k],fg);l.position.copy(d.clone().multiplyScalar(AL+0.35));axisGroup.add(l);
+    /* graduations: the value of σ_k (normalized stress, other two principal stresses zero) along each axis, in the current zoom */
+    const pp=new THREE.Vector3().crossVectors(d,new THREE.Vector3(0,1,0)).normalize(),tk=[],stp=axisStep();
+    for(let v=stp;v/US<=AL-0.15;v+=stp)[v,-v].forEach(w=>{const c=d.clone().multiplyScalar(w/US);
+      tk.push(c.clone().addScaledVector(pp,0.07),c.clone().addScaledVector(pp,-0.07));
+      const t=makeLabel(fmtTick(w),w>0?fg:mu);t.scale.multiplyScalar(0.65);t.position.copy(c).addScaledVector(pp,0.28);t.material.opacity=w>0?0.9:0.75;axisGroup.add(t);});
+    axisGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(tk),pm));}
   const hm=new THREE.LineDashedMaterial({color:new THREE.Color(mu),dashSize:0.15,gapSize:0.1});
   const h=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-4.9,0),new THREE.Vector3(0,4.9,0)]),hm);h.computeLineDistances();axisGroup.add(h);
   const l1=makeLabel('ξ (tension)',mu);l1.position.set(0,5.2,0);axisGroup.add(l1);
@@ -859,6 +882,13 @@ const ringMat2=new THREE.LineBasicMaterial({color:0x000000});
 const ring2=new THREE.LineLoop(ringGeo2,ringMat2);ring2.visible=false;scene.add(ring2);
 const disk=new THREE.Mesh(new THREE.CircleGeometry(3.6,72).rotateX(-PI/2),new THREE.MeshBasicMaterial({color:0x888888,transparent:true,opacity:0.045,side:THREE.DoubleSide,depthWrite:false}));
 scene.add(disk);
+/* everything drawn in stress units lives in geoGroup, scaled by 1/US; axes and labels stay at a fixed size */
+const geoGroup=new THREE.Group();scene.add(geoGroup);
+[surf,wire,surf2,wire2,cutL1,cutL2,cutPlane,pathGroup,marker,ring,ring2,disk].forEach(o=>geoGroup.add(o));
+function applyUS(v){const ch=v!==US;US=v;if(ch)buildAxes();geoGroup.scale.setScalar(1/US);[disk,cutPlane,marker].forEach(o=>o.scale.setScalar(US));
+  cutL1.material.dashSize=cutL2.material.dashSize=0.12*US;cutL1.material.gapSize=cutL2.material.gapSize=0.07*US;
+  const xs=document.getElementById('xi');xs.min=(-4.6*US).toFixed(2);xs.max=(4.6*US).toFixed(2);xs.step=(0.01*US).toFixed(4);
+  const sn=document.getElementById('ovScale');if(sn){sn.hidden=US===1;sn.textContent=`view zoomed out ×${US} to show the whole cap`;}}
 
 /* ---------- state ---------- */
 let cur=MODELS[0],D=null,targetPos=null,fromPos=null,morphT=1,morphStart=0;const MORPH=reduce?0:850;
@@ -929,10 +959,10 @@ function updatePathInfo(){const el=document.getElementById('pathInfo');const r=p
 function build3DPaths(){
   while(pathGroup.children.length){const o=pathGroup.children.pop();o.geometry.dispose();o.material.dispose();}
   if(!cur.comp||!pathRes.length)return;
-  PATHS.forEach((q,i)=>{if(!q.on)return;const r=pathRes[i],L=Math.min(VIEWL,Math.max(0.05,pathEnd(r)));
+  PATHS.forEach((q,i)=>{if(!q.on)return;const r=pathRes[i],L=Math.min(VIEWL*US,Math.max(0.05,pathEnd(r)));
     const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),toWorld(L*q.u[0],L*q.u[1],L*q.u[2])]);
     const ln=new THREE.Line(g,new THREE.LineBasicMaterial({color:new THREE.Color(q.col),transparent:true,opacity:i===selPath?1:0.55,depthTest:false}));ln.renderOrder=4;pathGroup.add(ln);
-    const s=new THREE.Mesh(new THREE.SphereGeometry(r.fail!==null?0.06:0.04,12,8),new THREE.MeshBasicMaterial({color:new THREE.Color(q.col),depthTest:false}));
+    const s=new THREE.Mesh(new THREE.SphereGeometry((r.fail!==null?0.06:0.04)*US,12,8),new THREE.MeshBasicMaterial({color:new THREE.Color(q.col),depthTest:false}));
     s.position.copy(toWorld(L*q.u[0],L*q.u[1],L*q.u[2]));s.renderOrder=4;pathGroup.add(s);});}
 function drawPath(){
   if(!cur.comp||!pathRes.length)return;
@@ -988,7 +1018,7 @@ function stepRun(dt,now){
   const r=pathRes[selPath],q=PATHS[selPath],Lend=Math.max(0.05,pathEnd(r));
   runT=Math.min(1,runT+dt/7);const n=r.states.length,ft=runT*(n-1),j=Math.min(n-1,Math.floor(ft));
   runLam=j<n-1?r.states[j][0]+(r.states[j+1][0]-r.states[j][0])*(ft-j):r.states[n-1][0];if(r.fail!==null)runLam=Math.min(runLam,r.fail);
-  const ml=Math.min(VIEWL,runLam);marker.position.copy(toWorld(ml*q.u[0],ml*q.u[1],ml*q.u[2]));
+  const ml=Math.min(VIEWL*US,runLam);marker.position.copy(toWorld(ml*q.u[0],ml*q.u[1],ml*q.u[2]));
   if(now-runLast>120||runT>=1){runLast=now;PV[cur.id][cur.comp.k]=r.states[j][1];queueRebuild();
     const inp=document.getElementById(`p-${cur.id}-${cur.comp.k}`);if(inp){inp.value=r.states[j][1];const o=document.getElementById(`p-${cur.id}-${cur.comp.k}-o`);if(o)o.textContent=(+r.states[j][1]).toFixed(3);}}
   drawPath();drawPS();
@@ -1024,15 +1054,15 @@ let cut1=null,cut2=null,showCut=true;
 function Fs(m,P,a,b){return m.F(inv([a,b,0]),P);}
 function planeCut(m,P){
   let best=null,bf=Infinity;
-  for(let t=-4;t<=1.5;t+=0.05){const v=Fs(m,P,t,t);if(v<bf){bf=v;best=t;}}
+  for(let t=-4*US;t<=1.5*US;t+=0.05*US){const v=Fs(m,P,t,t);if(v<bf){bf=v;best=t;}}
   if(!(bf<0))return null;
-  const c=best,RM=7,N=70,pts=[];
+  const c=best,RM=7*US,N=70,pts=[];
   for(let k=0;k<NPS;k++){const be=2*PI*k/NPS,ca=Math.cos(be),sa=Math.sin(be);let lo=0,r=RM;
     for(let i=1;i<=N;i++){const q=i/N,rr=RM*q*q;if(!(Fs(m,P,c+rr*ca,c+rr*sa)<0)){let A=lo,B=rr;for(let j=0;j<24;j++){const M=(A+B)/2;if(Fs(m,P,c+M*ca,c+M*sa)<0)A=M;else B=M;}r=(A+B)/2;break;}lo=rr;}
     pts.push([c+r*ca,c+r*sa]);}
   return pts;}
 function uniax(m,P,dir){if(!(Fs(m,P,0,0)<0)&&!(Fs(m,P,dir*1e-4,0)<0))return null;let lo=0,hi=null;
-  for(let i=1;i<=80;i++){const q=i/80,s=8*q*q;if(!(Fs(m,P,dir*s,0)<0)){hi=s;break;}lo=s;}
+  for(let i=1;i<=80;i++){const q=i/80,s=8*US*q*q;if(!(Fs(m,P,dir*s,0)<0)){hi=s;break;}lo=s;}
   if(hi===null)return null;for(let j=0;j<30;j++){const M=(lo+hi)/2;if(Fs(m,P,dir*M,0)<0)lo=M;else hi=M;}return (lo+hi)/2;}
 function setCutLine(L,pts){if(!pts){L.visible=false;return;}const a=L.geometry.attributes.position.array;
   pts.forEach(([x,y],k)=>{const v=toWorld(x,y,0);a[k*3]=v.x;a[k*3+1]=v.y;a[k*3+2]=v.z;});
@@ -1049,7 +1079,7 @@ const psC=document.getElementById('ps');
 function drawPS(){
   const d=fit(psC),g=psC.getContext('2d'),W=psC.width,H=psC.height;g.clearRect(0,0,W,H);
   const fg=tok('--fg'),mu=tok('--muted'),gr=tok('--grid'),cc=catColor(),oc=tok('--ov');
-  let ext=1.2;[cut1,cut2].forEach(c=>c&&c.forEach(([x,y])=>{ext=Math.max(ext,Math.abs(x),Math.abs(y));}));ext=Math.min(7,ext*1.12);
+  let ext=1.2;[cut1,cut2].forEach(c=>c&&c.forEach(([x,y])=>{ext=Math.max(ext,Math.abs(x),Math.abs(y));}));ext=Math.min(7*US,ext*1.12);
   const pad=22*d,sc=(Math.min(W,H)/2-pad)/ext,cx=W/2,cy=H/2,X=x=>cx+x*sc,Y=y=>cy-y*sc;
   const stp=ext>4?2:ext>2?1:0.5;
   g.lineWidth=1*d;g.strokeStyle=gr;
@@ -1072,11 +1102,13 @@ function drawPS(){
   if(!cut1){g.fillStyle=mu;g.textAlign='center';g.textBaseline='middle';g.fillText('no closed section in σ₃ = 0 for these parameters',cx,cy-20*d);}}
 
 function rebuild(animate){
+  const nu=pickUS(),chg=nu!==US;if(chg)applyUS(nu);
   const r=buildPositions(cur,PV[cur.id]);D=r.D;
   fromPos=posAttr.array.slice();targetPos=r.pos;
   if(animate&&MORPH>0){morphT=0;morphStart=performance.now();}else{morphT=1;posAttr.array.set(targetPos);posAttr.needsUpdate=true;surfGeo.computeVertexNormals();}
   computeMeridians();updateCuts();updateEvoInfo();updateWarn();if(!running&&!runSave)computePaths();
   if(D&&(xiS<D.lo||xiS>D.hi))xiS=D.lo+(D.hi-D.lo)*0.5;
+  if(chg&&ov){rebuildOverlay();return;}
   updateSection();}
 
 function sweepDom(){if(!D)return null;if(!ov||!D2)return D;
@@ -1085,6 +1117,7 @@ function sweepDom(){if(!D)return null;if(!ov||!D2)return D;
 function rebuildOverlay(){
   merT2=[];merC2b=[];D2=null;
   const on=!!ov;surf2.visible=wire2.visible=on;
+  {const nu=pickUS();if(nu!==US){applyUS(nu);rebuild(false);}}
   if(on){const r=buildPositions(ov,PV[ov.id]);D2=r.D;posAttr2.array.set(r.pos);posAttr2.needsUpdate=true;surfGeo2.computeVertexNormals();
     if(D2){const P=PV[ov.id],N=160;for(let i=0;i<=N;i++){const x=D2.lo+(D2.hi-D2.lo)*i/N,end=(i===0&&D2.loC)||(i===N&&D2.hiC);
       merT2.push([x,end?0:rhoAt(ov,P,x,0)]);merC2b.push([x,end?0:rhoAt(ov,P,x,PI/3)]);}}}
@@ -1165,11 +1198,11 @@ function renderMerKey(){const el=document.getElementById('merKey');if(!el)return
   el.innerHTML=L.join('');}
 
 function drawPi(){
-  const d=fit(piC),g=piC.getContext('2d'),W=piC.width,H=piC.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-26*d,sc=R/3.4;
+  const d=fit(piC),g=piC.getContext('2d'),W=piC.width,H=piC.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-26*d,sc=R/(3.4*US);
   g.clearRect(0,0,W,H);
   const fg=tok('--fg'),mu=tok('--muted'),gr=tok('--grid'),cc=catColor();
   g.lineWidth=1*d;g.strokeStyle=gr;
-  for(let r=0.5;r<=3.4;r+=0.5){g.beginPath();g.arc(cx,cy,r*sc,0,2*PI);g.stroke();}
+  for(let r=0.5*US;r<=3.4*US+1e-9;r+=0.5*US){g.beginPath();g.arc(cx,cy,r*sc,0,2*PI);g.stroke();}
   g.font=`${11*d}px "JetBrains Mono", monospace`;g.textAlign='center';g.textBaseline='middle';
   for(let k=0;k<6;k++){const a=-PI/2-k*PI/3;
     g.strokeStyle=k%2?gr:mu;g.setLineDash(k%2?[3*d,3*d]:[]);g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);g.stroke();
@@ -1183,7 +1216,7 @@ function drawPi(){
     g.beginPath();for(let k=0;k<NR;k++){const p=map(2*PI*k/NR,section[k],secC1);k?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]);}g.closePath();
     g.globalAlpha=0.22;g.fillStyle=cc;g.fill();g.globalAlpha=1;g.strokeStyle=cc;g.lineWidth=2.2*d;g.stroke();
     g.fillStyle=cc;[[0,'T'],[PI/3,'C']].forEach(([om,t])=>{const r=section[Math.round(om/(2*PI)*NR)%NR],p=map(om,r,secC1);g.beginPath();g.arc(p[0],p[1],3*d,0,2*PI);g.fill();
-      const q=map(om,r+0.32,secC1);g.fillText(t,q[0],q[1]);});
+      const q=map(om,r+0.32*US,secC1);g.fillText(t,q[0],q[1]);});
   }else if(!in2){g.fillStyle=mu;g.fillText('slice is outside the elastic domain',cx,cy);}
   if(in2){const oc=tok('--ov');g.beginPath();for(let k=0;k<NR;k++){const p=map(2*PI*k/NR,section2[k],secC2);k?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]);}g.closePath();
     g.globalAlpha=0.12;g.fillStyle=oc;g.fill();g.globalAlpha=1;g.strokeStyle=oc;g.lineWidth=2.2*d;g.setLineDash([7*d,4*d]);g.stroke();g.setLineDash([]);}
@@ -1201,7 +1234,7 @@ function drawPi(){
 /* cursor probe on the π-plane: a ray from the hydrostatic axis at polar angle om; returns the boundary radius and its Lode angle */
 let probe=null,lodeShown=null;
 function probeAt(om){const P=PV[cur.id],f=r=>cur.F(inv(point(xiS,r,om,null)),P);if(!(f(1e-6)<0))return null;
-  let lo=0,hi=0.05;while(f(hi)<0){lo=hi;hi*=1.3;if(hi>RMAX)return null;}
+  let lo=0,hi=0.05;while(f(hi)<0){lo=hi;hi*=1.3;if(hi>RMAX*US)return null;}
   for(let k=0;k<40;k++){const m=(lo+hi)/2;if(f(m)<0)lo=m;else hi=m;}
   const I=inv(point(xiS,lo,om,null));return {r:lo,th:I.th};}
 piC.addEventListener('pointermove',e=>{const b=piC.getBoundingClientRect(),x=e.clientX-b.left-b.width/2,y=e.clientY-b.top-b.height/2;
@@ -1240,21 +1273,24 @@ function drawLode(){if(document.getElementById('tLode').hidden)return;
 function drawMer(){
   const d=fit(merC2),g=merC2.getContext('2d'),W=merC2.width,H=merC2.height;g.clearRect(0,0,W,H);
   const fg=tok('--fg'),mu=tok('--muted'),gr=tok('--grid'),cc=catColor();
-  const pq=merMode==='pq',cx=pq?1/S3:1,cr=pq?Math.sqrt(1.5):1,XR=pq?2.8:4.8,YR=pq?4.9:4,CL=YR*0.99;
+  const pq=merMode==='pq',cx=pq?1/S3:1,cr=pq?Math.sqrt(1.5):1,XR=(pq?2.8:4.8)*US,YR=(pq?4.9:4)*US,CL=YR*0.99;
   const pad=10*d,X=x=>pad+(x*cx+XR)/(2*XR)*(W-2*pad),Y=r=>H/2-r*cr/YR*(H/2-pad);
   const Xd=x=>pad+(x+XR)/(2*XR)*(W-2*pad),Yd=r=>H/2-r/YR*(H/2-pad);
   g.lineWidth=1*d;g.strokeStyle=gr;
-  const xs=pq?[-2.5,-2,-1.5,-1,-0.5,0.5,1,1.5,2,2.5]:[-4,-3,-2,-1,1,2,3,4];
+  const nice=v=>{const e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;};
+  const gx=nice((pq?0.5:1)*US),gy=nice(US),xs=[],lx=[],ys=[];
+  for(let k=1;k*gx<XR*0.95;k++){xs.push(k*gx,-k*gx);if(k%2===0){lx.push(k*gx,-k*gx);}}
+  for(let k=0;k*gy<=YR;k++){ys.push(k*gy);if(k)ys.push(-k*gy);}
   for(const x of xs){g.beginPath();g.moveTo(Xd(x),pad);g.lineTo(Xd(x),H-pad);g.stroke();}
-  for(let r=-Math.floor(YR);r<=Math.floor(YR);r+=1){g.beginPath();g.moveTo(pad,Yd(r));g.lineTo(W-pad,Yd(r));g.stroke();}
+  for(const r of ys){g.beginPath();g.moveTo(pad,Yd(r));g.lineTo(W-pad,Yd(r));g.stroke();}
   g.strokeStyle=mu;g.beginPath();g.moveTo(pad,Yd(0));g.lineTo(W-pad,Yd(0));g.stroke();
   g.beginPath();g.moveTo(Xd(0),pad);g.lineTo(Xd(0),H-pad);g.stroke();
   g.font=`${10*d}px "JetBrains Mono", monospace`;g.fillStyle=mu;g.textBaseline='top';
   g.textAlign='left';g.fillText(pq?'q = √(3J₂) (tensile)':'ρ (tensile)',Xd(-XR*0.98),pad+2*d);
   g.textBaseline='bottom';g.fillText(pq?'q (compressive)':'ρ (compressive)',Xd(-XR*0.98),H-pad-2*d);
   g.textAlign='right';g.fillText(pq?'p = I₁/3 →':'ξ →',W-pad-2*d,Yd(0)-3*d);
-  g.textBaseline='top';(pq?[-2,-1,1,2]:[-4,-2,2,4]).forEach(x=>{g.textAlign='center';g.fillText(x,Xd(x),Yd(0)+3*d);});
-  g.textAlign='right';g.textBaseline='middle';for(let r=-Math.floor(YR);r<=Math.floor(YR);r++){if(r&&Math.abs(r)<YR-0.5)g.fillText(Math.abs(r),Xd(0)-4*d,Yd(r));}
+  g.textBaseline='top';lx.forEach(x=>{g.textAlign='center';g.fillText(+x.toFixed(3),Xd(x),Yd(0)+3*d);});
+  g.textAlign='right';g.textBaseline='middle';for(const r of ys){if(r&&Math.abs(r)<YR-0.5*gy)g.fillText(+Math.abs(r).toFixed(3),Xd(0)-4*d,Yd(r));}
   const clip=r=>Math.min(r*cr,CL)/cr;
   if(merT.length){
     const path=(arr,s)=>{g.beginPath();arr.forEach(([x,r],i)=>{const px=X(x),py=Y(s*clip(r));i?g.lineTo(px,py):g.moveTo(px,py);});};
@@ -1272,6 +1308,19 @@ function drawMer(){
     for(const [x,r,t] of pts){if(Math.abs(x*cx)>XR*0.98||Math.abs(r*cr)>YR*0.98)continue;const px=X(x),py=Y(r);
       g.fillStyle=tok('--panel');g.strokeStyle=fg;g.lineWidth=1.5*d;g.beginPath();g.arc(px,py,3.5*d,0,2*PI);g.fill();g.stroke();
       g.fillStyle=fg;g.textAlign='left';g.textBaseline=r<0?'top':'bottom';g.fillText(t,px+5*d,r<0?py+3*d:py-3*d);}}
+  /* plastic flow direction ∂G/∂σ along both meridians, drawn as the gradient in screen space so that normality reads as normality */
+  if(cur.comp&&merT.length){const Gf=flowG(cur),P=PV[cur.id],kx=cx*(W-2*pad)/(2*XR),ky=cr*(H/2-pad)/YR,hh=1e-4*US,La=15*d;
+    const gv=(x,r,om)=>Gf(inv(point(x,r,om,ctrOf(cur,P,x))),P);
+    g.strokeStyle=fg;g.fillStyle=fg;g.lineWidth=1.3*d;g.globalAlpha=0.75;
+    [[merT,1,0],[merC,-1,PI/3]].forEach(([arr,sg,om])=>{const n=arr.length;
+      for(let k=1;k<12;k++){const [x,r]=arr[Math.round(k*(n-1)/12)];if(!(r>2e-3)||r*cr>CL)continue;
+        const gx=(gv(x+hh,r,om)-gv(x-hh,r,om))/(2*hh),gy=(gv(x,r+hh,om)-gv(x,r-hh,om))/(2*hh);
+        let sx=gx/kx,sy=sg*gy/ky;const nn=Math.hypot(sx,sy);if(!(nn>0))continue;sx*=La/nn;sy*=La/nn;
+        const x0=X(x),y0=Y(sg*r),x1=x0+sx,y1=y0-sy,a=Math.atan2(y1-y0,x1-x0);
+        g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+        g.beginPath();g.moveTo(x1,y1);g.lineTo(x1-5*d*Math.cos(a-0.45),y1-5*d*Math.sin(a-0.45));g.lineTo(x1-5*d*Math.cos(a+0.45),y1-5*d*Math.sin(a+0.45));g.closePath();g.fill();}});
+    g.globalAlpha=1;g.font=`${10*d}px "JetBrains Mono", monospace`;g.fillStyle=mu;g.textAlign='right';g.textBaseline='bottom';
+    g.fillText(cur.G?'arrows: flow ∂G/∂σ':'arrows: flow ∂f/∂σ',W-pad-2*d,H-pad-2*d);}
   renderMerKey();
   g.strokeStyle=fg;g.lineWidth=1.2*d;g.setLineDash([3*d,3*d]);g.beginPath();g.moveTo(X(xiS),pad);g.lineTo(X(xiS),H-pad);g.stroke();g.setLineDash([]);}
 
