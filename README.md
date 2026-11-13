@@ -2,15 +2,15 @@
 
 **Live page:** `https://rkubler.github.io/yield-surface
 
-This page plots yield surfaces in principal stress space, with their π-plane sections, meridians, plane-stress cuts and, for compacting materials, loading paths. It covers four families of criteria, all written in the stress invariants I₁, J₂ and J₃ (Lode angle):
+This page plots yield surfaces in principal stress space, with their π-plane sections, meridians, plane-stress cuts and, for compacting materials, loading paths. It covers five families of criteria, all written in the stress invariants I₁, J₂ and J₃ (Lode angle):
 
 - **Pressure-insensitive criteria (metals):** von Mises, Tresca, Drucker (1949), Hosford, Cazacu–Barlat (2004)
 - **Pressure-sensitive cones (soils, rock, concrete, ductile metals):** Drucker–Prager, Mohr–Coulomb, Lade–Duncan, Matsuoka–Nakai, Hoek–Brown, Willam–Warnke, Ottosen, Bai–Wierzbicki (2008)
 - **Clays · foams · porous metals:** Modified Cam-Clay, Gurson (GTN)
 - **Powder compacts · sands · granular fills:** Drucker–Prager Cap, DiMaggio–Sandler, Kuhn–Downey, SANISAND (closed)
-- **Stress-activated martensitic transformation**
+- **Stress-activated martensitic transformation (TRIP steels, shape memory alloys):** Patel–Cohen (1953), Auricchio–Taylor–Lubliner (1997), Qidwai–Lagoudas (2000), Bouvet–Calloch–Lexcellent (2004), Kubler–Berveiller–Buessler (2011)
 
-It is made for educational purposes.
+It is made for educational purposes. For more precise information, the reader is invited to read the original papers referenced under each model.
 
 ![Yield Surface Atlas](assets/preview.png)
 
@@ -19,7 +19,6 @@ Developed with the assistance of Claude Opus 5.5 (Anthropic), October 2026
 **Version 1.6** (11 October 2026)
 
 ## What the page shows
-
 - **3D view:** the surface rotating in principal stress space, with the hydrostatic axis, the π-plane sweep and the σ₃ = 0 cut. A second tab gives the classical σ₁σ₂σ₃ view: a parallel (cabinet oblique) projection with σ₁ horizontal to the right, σ₂ vertical upward and σ₃ toward the viewer.
 - **π-plane section:** the deviatoric section at any position ξ along the hydrostatic axis.
 - **Plane stress σ₃ = 0:** the biaxial cut, with tensile and compressive strengths and their ratio.
